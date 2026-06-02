@@ -1,4 +1,4 @@
-"""Extract embedded check registers from 2011-2019 meeting-packet PDFs in C:\\Dev\\TroySD.
+"""Extract embedded check registers from 2011-2019 meeting-packet PDFs under source_data/BoardDocs_PDFs_pre2020/.
 
 Strategy:
 - Scan every page of every meeting PDF
@@ -18,11 +18,12 @@ from collections import Counter, defaultdict
 
 sys.path.insert(0, str(Path(__file__).parent))
 from parser import LINE_RE, FUND_RE, parse_amount, parse_date, fy_for, SKIP_PREFIXES
+import _paths
 import pdfplumber
 
-TROYSD = Path(r'C:\Dev\TroySD')
-BUILD = Path(__file__).parent
-OUT_PKL = BUILD / 'pre2020_lines.pkl'
+TROYSD = _paths.EMBEDDED_PDFS
+BUILD = _paths.BUILD
+OUT_PKL = _paths.PRE2020_PKL
 SUMMARY = BUILD / 'pre2020_summary.txt'
 
 DASH_TRANS = str.maketrans({'‐': '-', '‑': '-', '‒': '-', '–': '-',

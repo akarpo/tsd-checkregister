@@ -40,25 +40,31 @@ tsd-checkregister/                           ← repo root (deliverables only)
 
 ## Reproducibility
 
-The original FY23-FY26 dashboard and workbook were built via the Claude.ai web interface; those prompts were not captured. The FY21-FY22 backfill (April 2026) and FY12-FY19 backfill (May 2026) were performed via Claude Code with full source under `Working Folder/Cache and Tools/build/`:
+The original FY23-FY26 dashboard and workbook were built via the Claude.ai web interface (those prompts were not captured). The FY21-FY22 backfill (April 2026) and FY12-FY19 backfill (May 2026) were performed via Claude Code. The build pipeline lives under `Working Folder/Cache and Tools/build/` as a single, portable, self-contained flow — no machine-specific paths, no external lookup files — driven by `rebuild.py`:
 
-- `parser.py` — Pentamation check register PDF parser (regex-based, validated to within 0 rows / $0.00 against original FY23-FY26 totals: 47,917 rows / $417,275,260.96)
-- `pre2020_extract.py` — embedded-register extractor for 2011-2019 board-meeting packets; handles em-dash normalization
-- `categorize_v2.py` — line categorization (vendor lookup + Michigan PSAM function-code rules)
-- `full_parse.py` — orchestrator: parses all PDFs, applies categorization, emits `all_lines.pkl`
-- `build_combined_wb.py` — combines pre-2020 + post-2020, applies categorization + subject classification, builds the 7-sheet xlsx
-- `rebuild_dashboard.py` — rebuilds the inlined JSON payload in `index.html`
+| Stage | Script | Output |
+|---|---|---|
+| Parse standalone registers (FY21-FY26) | `full_parse.py` → `parser.py` | `all_lines.pkl` |
+| Parse embedded packets (FY11-FY20) | `pre2020_extract.py` | `pre2020_lines.pkl` |
+| Recover the Oct 2019 register (pypdf fallback) | `recover_oct2019.py` | `oct2019_recovered.pkl` |
+| Merge + Issue-Date FY + categorize + classify | `rebuild_after_bundlefix.py` | `combined_lines.pkl` |
+| Build the 8-sheet workbook | `rebuild_final.py` (`build_workbook`) | `Troy_SD_Check_Register_FY11-FY26.xlsx` |
+| Build the dashboard payload | `rebuild_dashboard_full.py` (`write_dashboard`) | `index.html` |
 
-To re-run end-to-end:
+Categorization (`categorize_v2.py`) and subject classification (`subjects.py`) read committed lookups in `build/lookups/` (`vendor_categories.json`, `vendor_subject.json`), regenerated from the deliverables by `build_lookups.py`. Superseded one-off scripts are kept in `build/archive/`.
+
 ```bash
 cd "Working Folder/Cache and Tools/build"
-python full_parse.py            # parse standalone registers (67) → all_lines.pkl  (~7 min)
-python pre2020_extract.py       # extract embedded registers (85) → pre2020_lines.pkl  (~30 min)
-python build_combined_wb.py     # merge + classify + build xlsx
-python rebuild_dashboard.py     # update index.html payload
+python rebuild.py                  # full pipeline (needs source PDFs + pdfplumber/pypdf)
+python rebuild.py --assemble-only  # rebuild workbook + dashboard from combined_lines.pkl
+python validate.py                 # verify a rebuild reconciles to 224,267 lines / $1,227,024,514.73
 ```
 
-> **Reproducibility caveat:** This four-step sequence is the core post-2020 flow and assumes the full source-PDF corpus is present in `source_data/` (most of it is **not** tracked in git — see the source-PDF note above). The committed FY11-FY26 workbook was built incrementally on top of this flow: the 8th sheet (`By Issue-Date FY x Fund`), the Oct 2019 / FY20-FY21 register recoveries, and the FY11-FY22 backfill were applied by additional one-off scripts in `build/` (e.g. `rebuild_with_issue_fy.py`, `rebuild_final.py`), not a single clean entry point. Reproducing the exact committed workbook from scratch would require re-tracing those steps.
+**Caveats:**
+- The **parse** stages need the full source-PDF corpus in `source_data/`, most of which is **not tracked in git** (see "Source PDFs" above). The **assemble** stages (workbook + dashboard) are fully reproducible and are validated against the committed totals by `validate.py`, which reconstructs the row set from the workbook itself — so no source PDFs are needed to verify them.
+- The committed `index.html` dashboard data is one revision behind the workbook (222,132 vs 224,267 lines — the 2026-05-13 recovery updated the workbook but the dashboard was not regenerated). A `rebuild.py --assemble-only` run resyncs it.
+- The curriculum/PD spotlight in `index.html` (the hand-anchored `CURRICULUM_DATA` block) is regenerated separately and semi-manually via `split_curriculum_pd_v2.py` (run it, paste its JS arrays); `rebuild.py` does not touch it.
+- `parser.py` was validated to within 0 rows / $0.00 against the original FY23-FY26 workbook (47,917 rows / $417,275,260.96).
 
 See [`PROMPTS.md`](PROMPTS.md) for the prompt scaffold and [`Working Folder/Prompts/running.md`](Working%20Folder/Prompts/running.md) for the chronological prompt log.
 

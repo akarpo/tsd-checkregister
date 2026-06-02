@@ -1,16 +1,18 @@
-"""Categorization v2 — vendor lookup with fund/function disambiguation for multi-cat vendors."""
-from __future__ import annotations
-import json, pickle
-from pathlib import Path
-from collections import defaultdict
+"""Categorization v2 — vendor lookup with fund/function disambiguation for multi-cat vendors.
 
-PAYLOAD = json.loads(Path(r'C:\Users\Alex\AppData\Local\Temp\dashboard_payload.json').read_text(encoding='utf-8'))
-VENDOR_CATS = defaultdict(lambda: defaultdict(float))
-for cat, data in PAYLOAD['all']['categories'].items():
-    for fy, vlist in data.get('vendorsByYear', {}).items():
-        for v in vlist:
-            VENDOR_CATS[v['v']][cat] += v['t']
-VENDOR_CATS = {v: dict(c) for v, c in VENDOR_CATS.items()}
+The vendor->category seed lives in build/lookups/vendor_categories.json (committed,
+re-derived from the dashboard payload by build_lookups.py). Vendors not in the seed
+fall through to pure rule-based categorization (_default_categorize)."""
+from __future__ import annotations
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _paths
+
+# {vendor: {category: total}} — vendor-first categorization seed.
+VENDOR_CATS = json.loads(_paths.VENDOR_CATEGORIES.read_text(encoding="utf-8"))
 
 
 def categorize(vendor, fund, func, account, bu, amt):
@@ -148,26 +150,22 @@ def _default_categorize(fund, func, account, bu, amt):
     return 'Untyped (function code blank or 000)'
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    # Smoke test: re-categorize the committed workbook and print category totals.
+    # Full reconciliation lives in validate.py.
     import openpyxl
     from collections import defaultdict
-    wb = openpyxl.load_workbook(r'C:\Dev\CheckRegister\Troy_SD_Check_Register_FY23-FY26.xlsx', read_only=True, data_only=True)
-    expected = {c: d['total'] for c, d in PAYLOAD['all']['categories'].items()}
+    wb = openpyxl.load_workbook(_paths.WORKBOOK, read_only=True, data_only=True)
     actual = defaultdict(float)
-    for r in wb['All Lines'].iter_rows(values_only=True):
-        if r[0] == 'Source Meeting': continue
-        cat = categorize(r[9] or '', str(r[2] or ''), str(r[11] or ''),
-                         str(r[12] or ''), str(r[10] or ''), r[15] or 0)
-        actual[cat] += r[15] or 0
-    print(f'{"Category":<55} {"Expected":>14} {"Actual":>14} {"Diff":>13} {"Pct":>6}')
-    matched = 0
-    total = sum(expected.values())
-    for cat in sorted(expected, key=lambda c: -expected[c]):
-        exp = expected[cat]; act = actual.get(cat, 0); diff = act - exp
-        pct = (diff / exp * 100) if exp else 0
-        threshold = max(5000, abs(exp) * 0.02)
-        ok = 'OK' if abs(diff) < threshold else '  '
-        print(f'{ok} {cat:<53} {exp:>14,.0f} {act:>14,.0f} {diff:>+13,.0f} {pct:>+5.1f}%')
-        if abs(diff) < threshold: matched += abs(exp)
-    print(f'\nGrand: ${sum(actual.values()):,.2f} (vs ${total:,.2f}, diff ${sum(actual.values())-total:+,.2f})')
-    print(f'Match within $5K or 2%: {matched/total*100:.1f}%')
+    for r in wb["All Lines"].iter_rows(values_only=True):
+        if r[0] == "Source Meeting":
+            continue
+        # All Lines schema: [3]=Fund [10]=Vendor Name [11]=Budget Unit [12]=Function Code [13]=Account [16]=Amount
+        cat = categorize(r[10] or "", str(r[3] or ""), str(r[12] or ""),
+                         str(r[13] or ""), str(r[11] or ""), r[16] or 0)
+        actual[cat] += r[16] or 0
+    wb.close()
+    print(f"{len(VENDOR_CATS):,} vendors in seed; {len(actual)} categories assigned")
+    for cat in sorted(actual, key=lambda c: -actual[c]):
+        print(f"  {cat:<55} ${actual[cat]:>14,.2f}")
+    print(f"  {'GRAND TOTAL':<55} ${sum(actual.values()):>14,.2f}")

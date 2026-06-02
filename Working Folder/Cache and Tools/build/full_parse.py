@@ -13,37 +13,12 @@ from collections import defaultdict, Counter
 sys.path.insert(0, str(Path(__file__).parent))
 from parser import parse_pdf
 from categorize_v2 import categorize, VENDOR_CATS
+from subjects import classify_subject, classify_confidence
+import _paths
 
-PDFS_DIR = Path(r'C:\Dev\CheckRegister\Working Folder\Cache and Tools\source_data\BoardDocs_PDFs')
-OUT_PKL = Path(__file__).parent / 'all_lines.pkl'
-SUMMARY = Path(__file__).parent / 'parse_summary.txt'
-
-# Subject classifier (from existing data)
-VENDOR_SUBJECT = pickle.loads(Path(r'C:\Users\Alex\AppData\Local\Temp\vendor_subject.pkl').read_bytes())
-
-def classify_subject(vendor, desc):
-    """Subject classification for Curriculum_PD lines (BU starts with 101425221).
-    Uses existing vendor → subject mapping derived from FY23-FY26 workbook."""
-    if not vendor: return 'Not Directly Attributable'
-    # Direct vendor lookup first
-    for v_key, subj in VENDOR_SUBJECT.items():
-        if vendor.startswith(v_key[:15]):
-            return subj
-    # Fallback heuristics from description keywords
-    d = (desc or '').upper()
-    if any(k in d for k in ('READING', 'WRITING', 'LITERACY', 'CALKINS', 'F&P', 'FOUNTAS')):
-        return 'ELA'
-    if any(k in d for k in ('MATH', 'AVMR', 'MRSP', 'BRIDGES', 'ALGEBRA', 'GEOMETRY')):
-        return 'Math'
-    if 'SCIENCE' in d: return 'Science'
-    if 'SOCIAL' in d: return 'Social Studies'
-    return 'Not Directly Attributable'
-
-def classify_confidence(vendor, desc, subj):
-    if subj == 'Not Directly Attributable': return 'low'
-    if vendor and any(vendor.startswith(v[:15]) for v in VENDOR_SUBJECT):
-        return 'high'
-    return 'med'
+PDFS_DIR = _paths.STANDALONE_PDFS
+OUT_PKL = _paths.ALL_LINES_PKL
+SUMMARY = _paths.BUILD / 'parse_summary.txt'
 
 def main():
     pdfs = sorted(PDFS_DIR.glob('*.pdf'))
@@ -67,7 +42,7 @@ def main():
             r['Confidence'] = ''
             if r.get('Budget Unit','').startswith('101425221'):
                 r['Subject'] = classify_subject(r.get('Vendor Name',''), r.get('Description',''))
-                r['Confidence'] = classify_confidence(r.get('Vendor Name',''), r.get('Description',''), r['Subject'])
+                r['Confidence'] = classify_confidence(r.get('Vendor Name',''), r['Subject'])
         all_lines.extend(rows)
         tot = sum(r['Amount'] for r in rows)
         summary.append((pdf.name, len(rows), tot, ''))

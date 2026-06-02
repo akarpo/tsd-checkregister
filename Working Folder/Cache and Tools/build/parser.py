@@ -113,7 +113,9 @@ def parse_pdf(path: Path) -> list[dict]:
 
 if __name__ == '__main__':
     import sys, json
-    test = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(r'C:\Dev\CheckRegister\Working Folder\Cache and Tools\source_data\BoardDocs_PDFs\2023-01-17_Check register by fund Nov 2022.pdf')
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import _paths
+    test = Path(sys.argv[1]) if len(sys.argv) > 1 else _paths.STANDALONE_PDFS / '2023-01-17_Check register by fund Nov 2022.pdf'
     rows = parse_pdf(test)
     print(f'Parsed: {len(rows)} rows')
     print(f'Total amount: ${sum(r["Amount"] for r in rows):,.2f}')

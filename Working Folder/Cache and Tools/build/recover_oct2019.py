@@ -5,10 +5,11 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent))
 from parser import LINE_RE, FUND_RE, parse_amount, parse_date, fy_for, SKIP_PREFIXES
+import _paths
 
 from pypdf import PdfReader
 
-ERRORED = Path(r'C:\Dev\TroySD\2019-01-01_2019 Board Packets and Minutes\101519RegMtg.pdf')
+ERRORED = _paths.EMBEDDED_PDFS / '2019-01-01_2019 Board Packets and Minutes' / '101519RegMtg.pdf'
 
 DASH_TRANS = str.maketrans({'‐': '-', '‑': '-', '‒': '-', '–': '-',
                             '—': '-', '―': '-', '−': '-', '﹘': '-',
@@ -94,6 +95,6 @@ ifyr = Counter(issue_fy(r['Issue Date']) for r in rows)
 print(f'Issue-Date FY: {dict(ifyr)}')
 
 # Save
-out = Path(r'C:\Dev\CheckRegister\Working Folder\Cache and Tools\build\oct2019_recovered.pkl')
+out = _paths.OCT2019_PKL
 out.write_bytes(pickle.dumps(rows))
 print(f'Saved: {out}')

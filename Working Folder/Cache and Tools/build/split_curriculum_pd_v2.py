@@ -11,11 +11,15 @@ For FY/swimlane combos where my filter captured zero lines but the original tota
 (parser/filter coverage mismatch), assume 100% curriculum (consistent with the description
 'curriculum spend' for those years where PD wasn't isolated separately).
 """
+import sys
 import pickle
 from pathlib import Path
 from collections import defaultdict
 
-combined = pickle.loads(Path('combined_lines.pkl').read_bytes())
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import _paths
+
+combined = pickle.loads(_paths.COMBINED_PKL.read_bytes())
 print(f'Loaded: {len(combined):,} rows')
 
 EXISTING = {

@@ -26,7 +26,7 @@ tsd-checkregister/                           (git repo root — single source of
 
 ## Status
 
-The original FY23-FY26 dashboard and workbook were built through the Claude.ai web interface; those prompts were not captured. The FY21-FY22 backfill (April 2026) and FY12-FY19 backfill (May 2026) were done through Claude Code and added a Python extraction pipeline under `Cache and Tools/build/` (`parser.py`, `pre2020_extract.py`, `categorize_v2.py`, `full_parse.py`, `build_combined_wb.py`, plus incremental `rebuild_*.py` scripts). See the root [`README.md`](../README.md#reproducibility) for the re-run sequence and its caveats.
+The original FY23-FY26 dashboard and workbook were built through the Claude.ai web interface; those prompts were not captured. The FY21-FY22 backfill (April 2026) and FY12-FY19 backfill (May 2026) were done through Claude Code, which now provides a consolidated, portable build pipeline under `Cache and Tools/build/`: a single `rebuild.py` orchestrator (parse → merge → build workbook + dashboard), committed vendor lookups in `build/lookups/`, a `validate.py` consistency check, and superseded one-offs in `build/archive/`. See the root [`README.md`](../README.md#reproducibility) for the stages, the `--assemble-only` path, and caveats.
 
 A prompt-history scaffold lives under `Prompts/` and at the root in [`PROMPTS.md`](../PROMPTS.md). Any future revision (FY refresh, dashboard change, pipeline work) should be run through Claude Code with the prompt logged in both places, so the project stays reproducible going forward. If the original Claude.ai conversations are recovered, backfill them into the same structure.
 

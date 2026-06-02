@@ -11,12 +11,14 @@ from datetime import datetime
 from collections import Counter
 
 sys.path.insert(0, str(Path(__file__).parent))
-from categorize_v2 import categorize, VENDOR_CATS
+from categorize_v2 import categorize
+from subjects import classify_subject, classify_confidence
+import _paths
 
-BUILD = Path(__file__).parent
-pre = pickle.loads((BUILD / 'pre2020_lines.pkl').read_bytes())
-oct19 = pickle.loads((BUILD / 'oct2019_recovered.pkl').read_bytes())
-post = pickle.loads((BUILD / 'all_lines.pkl').read_bytes())
+BUILD = _paths.BUILD
+pre = pickle.loads(_paths.PRE2020_PKL.read_bytes())
+oct19 = pickle.loads(_paths.OCT2019_PKL.read_bytes())
+post = pickle.loads(_paths.ALL_LINES_PKL.read_bytes())
 print(f'Pre-2020 (re-extracted): {len(pre):,}', flush=True)
 print(f'Oct 2019 recovered:      {len(oct19):,}', flush=True)
 print(f'FY21-FY26 standalone:    {len(post):,}', flush=True)
@@ -35,19 +37,7 @@ def issue_fy(d):
     if not isinstance(d, datetime): return ''
     return f'FY{(d.year+1)%100:02d}' if d.month >= 7 else f'FY{d.year%100:02d}'
 
-VENDOR_SUBJECT = pickle.loads(Path(r'C:\Users\Alex\AppData\Local\Temp\vendor_subject.pkl').read_bytes())
-
-def classify_subject(vendor, desc):
-    if not vendor: return 'Not Directly Attributable'
-    for v_key, subj in VENDOR_SUBJECT.items():
-        if vendor.startswith(v_key[:15]):
-            return subj
-    d = (desc or '').upper()
-    if any(k in d for k in ('READING','WRITING','LITERACY','CALKINS','F&P','FOUNTAS')): return 'ELA'
-    if any(k in d for k in ('MATH','AVMR','MRSP','BRIDGES','ALGEBRA','GEOMETRY')): return 'Math'
-    if 'SCIENCE' in d: return 'Science'
-    if 'SOCIAL' in d: return 'Social Studies'
-    return 'Not Directly Attributable'
+# Subject + confidence classification now live in subjects.py (committed lookup).
 
 print('Re-applying categorization + subjects + Issue-Date FY...', flush=True)
 for r in combined:
@@ -57,18 +47,12 @@ for r in combined:
                               r.get('Budget Unit',''), r.get('Amount', 0))
     if r.get('Budget Unit','').startswith('101425221'):
         r['Subject'] = classify_subject(r.get('Vendor Name',''), r.get('Description',''))
-        v = r.get('Vendor Name','')
-        if v and any(v.startswith(vk[:15]) for vk in VENDOR_SUBJECT):
-            r['Confidence'] = 'high'
-        elif r.get('Subject') != 'Not Directly Attributable':
-            r['Confidence'] = 'med'
-        else:
-            r['Confidence'] = 'low'
+        r['Confidence'] = classify_confidence(r.get('Vendor Name',''), r['Subject'])
     else:
         r['Subject'] = ''
         r['Confidence'] = ''
 
-(BUILD / 'combined_lines.pkl').write_bytes(pickle.dumps(combined))
+_paths.COMBINED_PKL.write_bytes(pickle.dumps(combined))
 print(f'Saved combined_lines.pkl: {len(combined):,} rows', flush=True)
 
 # FY breakdown
