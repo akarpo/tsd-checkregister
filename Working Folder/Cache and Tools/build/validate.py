@@ -142,26 +142,29 @@ def main():
         all_ok &= ok
         print(f"  [{'PASS' if ok else 'FAIL'}] {name:<46} ({detail})")
 
-    # --- Informational: how the committed (patchwork) artifacts differ ---
-    print("\n=== COMMITTED-ARTIFACT DRIFT (informational; a clean rebuild.py would resync) ===")
+    # --- Informational: committed deliverables vs a fresh rebuild ---
+    print("\n=== COMMITTED vs REBUILT (informational) ===")
     readme_c = load_grid(_paths.WORKBOOK, "README")
     rec_line = next((str(r[0]) for r in readme_c if r and str(r[0]).startswith("Records:")), "?")
-    print(f"  README sheet says   : '{rec_line}'  (All Lines actually holds {N:,})")
+    readme_ok = f"{N:,}" in rec_line
+    any_drift = not readme_ok
+    print(f"  README sheet: '{rec_line}'" + ("  (in sync)" if readme_ok else f"  <- All Lines holds {N:,}"))
     for sheet in ["By Year x Fund", "By Issue-Date FY x Fund", "By Budget Unit",
                   "PD_Yearly_Summary", "PD by Subject"]:
         rc = len(load_grid(_paths.WORKBOOK, sheet))
         rr = len(load_grid(SCRATCH, sheet))
-        note = "" if rc == rr else "  <- differs"
-        print(f"  {sheet:<26} committed={rc:>5} rows | rebuilt={rr:>5} rows{note}")
-    print("  (By Year/Issue-Date x Fund: committed collapses the Fund 320 & 423 name variants;")
-    print("   PD_Yearly_Summary / PD by Subject: committed use an older script layout.)")
+        if rc != rr:
+            any_drift = True
+        print(f"  {sheet:<26} committed={rc:>5} | rebuilt={rr:>5}{'  <- differs' if rc != rr else ''}")
+    if any_drift:
+        print("  (Differences mean the committed workbook predates a clean rebuild — e.g. collapsed")
+        print("   Fund 320/423 name variants or an older PD-sheet layout; run `rebuild.py --assemble-only`.)")
 
     html = _paths.DASHBOARD.read_text(encoding="utf-8")
     cp = json.loads(re.search(r'<script id="data-payload"[^>]*>(.*?)</script>', html, re.DOTALL).group(1))
     cl = cp["meta"]["totalLines"]
-    print(f"  index.html payload  : {cl:,} lines  ->  STALE by {N - cl:+,} "
-          f"(workbook has the recovered registers; dashboard not regenerated)" if cl != N
-          else f"  index.html payload  : {cl:,} lines (in sync)")
+    print(f"  index.html payload: {cl:,} lines" +
+          ("  (in sync)" if cl == N else f"  <- STALE by {N - cl:+,}; run `rebuild.py --assemble-only`"))
 
     SCRATCH.unlink(missing_ok=True)
     print("\n=== RESULT ===")
