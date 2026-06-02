@@ -1,13 +1,14 @@
 # Working Folder
 
-Source data and project documentation for the Check Register Reconciliation project. The user-facing artifacts (`index.html`, `Troy_SD_Check_Register_FY23-FY26.xlsx`) live at the **repo root**, not here.
+Source data and project documentation for the Check Register Reconciliation project. The user-facing artifacts (`index.html`, `Troy_SD_Check_Register_FY11-FY26.xlsx`, `Missing_Months_FY11-FY26.xlsx`) live at the **repo root**, not here.
 
 ## Layout
 
 ```
 tsd-checkregister/                           (git repo root — single source of truth for deliverables)
 ├── index.html                               ← dashboard (static, hand-edited)
-├── Troy_SD_Check_Register_FY23-FY26.xlsx    ← master workbook
+├── Troy_SD_Check_Register_FY11-FY26.xlsx    ← master workbook
+├── Missing_Months_FY11-FY26.xlsx            ← gap audit + BoardDocs probe log
 ├── README.md
 ├── PROMPTS.md                               ← structured build-prompt scaffold (reproducibility)
 └── Working Folder/                          ← THIS FOLDER
@@ -18,15 +19,15 @@ tsd-checkregister/                           (git repo root — single source of
     │   └── <YYYY-MM-DD_HH-MM-SS>/           ← one folder per logged prompt
     └── Cache and Tools/
         ├── source_data/
-        │   └── BoardDocs_PDFs/              ← 45 monthly check-register PDFs from BoardDocs
+        │   └── BoardDocs_PDFs/              ← 45 standalone register PDFs tracked in git (May 2022 → Feb 2026); most source PDFs gitignored
         └── project_docs/
             └── INDEX.md                     ← source notes, FY coverage, known gaps
 ```
 
 ## Status
 
-The dashboard and xlsx were built through the Claude.ai web interface during the initial pull from BoardDocs. They are kept here as static artifacts; there is no automated rebuild pipeline yet, and the original prompts were not captured at the time.
+The original FY23-FY26 dashboard and workbook were built through the Claude.ai web interface; those prompts were not captured. The FY21-FY22 backfill (April 2026) and FY12-FY19 backfill (May 2026) were done through Claude Code and added a Python extraction pipeline under `Cache and Tools/build/` (`parser.py`, `pre2020_extract.py`, `categorize_v2.py`, `full_parse.py`, `build_combined_wb.py`, plus incremental `rebuild_*.py` scripts). See the root [`README.md`](../README.md#reproducibility) for the re-run sequence and its caveats.
 
-A scaffold for prompt history now exists under `Prompts/` and at the root in [`PROMPTS.md`](../PROMPTS.md). The intent is that any future revision (refresh of FY data, dashboard changes, extraction pipeline work) is performed through Claude Code with prompts logged in both places, so the project remains reproducible end-to-end going forward. If the original Claude.ai conversations are recovered, they can be backfilled into the same structure.
+A prompt-history scaffold lives under `Prompts/` and at the root in [`PROMPTS.md`](../PROMPTS.md). Any future revision (FY refresh, dashboard change, pipeline work) should be run through Claude Code with the prompt logged in both places, so the project stays reproducible going forward. If the original Claude.ai conversations are recovered, backfill them into the same structure.
 
-If/when an extraction pipeline is added, it will follow the same pattern as the sibling `tsd-achievement` repo: scripts in `Cache and Tools/`, intermediate CSVs in `Cache and Tools/extracted_data/`, a portable `_paths.py`, and a `rebuild.command` that writes the xlsx directly to the repo root.
+Note: most source PDFs are excluded from git (see the root README "Source PDFs" note); the workbook and dashboard are committed as complete, current artifacts.
