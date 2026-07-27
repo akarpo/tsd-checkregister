@@ -180,6 +180,13 @@ def write_dashboard(payload, html_path):
         html
     )
     html = re.sub(r'\d+ monthly check register PDFs', f'{payload["meta"]["sourceCount"]} monthly check register PDFs', html)
+    # Section badge + the methodology reconciliation sentence. Both were written
+    # against the original FY23-FY26 build ($203M + $214M = $417M) and had gone
+    # stale by a factor of three; derive them so they cannot drift again.
+    html = re.sub(r'(class="badge-all">)\$[\d,]+M( · all funds)',
+                  lambda m: m.group(1) + fmt_m(total) + m.group(2), html)
+    html = re.sub(r'\(\$[\d,]+M \+ \$[\d,]+M = \$[\d,]+M\)',
+                  f'({fmt_m(op_total)} + {fmt_m(bond_total)} = {fmt_m(total)})', html)
     if payload['meta'].get('throughMonth'):
         html = re.sub(r'FY\d\d partial \(through [A-Z][a-z]+ \d{4}\)',
                       f'{fys[-1]} partial (through {payload["meta"]["throughMonth"]})', html)

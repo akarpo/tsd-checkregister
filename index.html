@@ -309,7 +309,7 @@
 
     <!-- Section 1: ALL spending -->
     <section id="section-all">
-      <h2>All disbursements <span class="badge-all">$417M · all funds</span></h2>
+      <h2>All disbursements <span class="badge-all">$1278M · all funds</span></h2>
       <p class="section-desc">Full check register: every fund, every line item, FY11-FY26.</p>
       <div class="stats-row" data-role="stats"></div>
       <h3>Fiscal year totals — click a card to chart that year</h3>
@@ -419,7 +419,7 @@
       Source PDFs were parsed via Pentamation table extraction. Each line was tagged with its Michigan PSAM Function Code per <a href="https://www.michigan.gov/mde/services/financial-management/saa/manuals">MDE Bulletin 1022</a>. For instructional functions (110-119, 221-229), a rule-based subject classifier assigned tags from vendor name + description text. The 32 PSAM categories aggregate to the standard 4-digit chart of accounts. Lines with blank function codes (typically payroll batches and clearing transactions) are categorized by description.
     </p>
     <p class="section-desc">
-      <strong>Operating vs Bond split:</strong> "Operating" includes General Fund, Special Education Fund, Food Service, Student Activity, Latchkey/Childcare, and Athletics funds. "Bond/capital" includes Capital Projects Bond funds (419, 423, 498), Building &amp; Site Sinking Fund (314-323), and Debt Service Fund (511). Operating + Bond reconciles exactly to All ($203M + $214M = $417M).
+      <strong>Operating vs Bond split:</strong> "Operating" includes General Fund, Special Education Fund, Food Service, Student Activity, Latchkey/Childcare, and Athletics funds. "Bond/capital" includes Capital Projects Bond funds (419, 423, 498), Building &amp; Site Sinking Fund (314-323), and Debt Service Fund (511). Operating + Bond reconciles exactly to All ($790M + $488M = $1278M).
     </p>
     <p class="section-desc">
       <strong>Important interpretation note:</strong> "Support — Instructional Staff (PD/Curriculum)" Function 221 totals include both genuine curriculum/PD spending AND technology refreshes (iPads, MacBooks, network gear) that some districts code under 221. Apple-related vendors alone account for ~40% of Function 221 spending in this dataset. Use the vendor drill-down to separate.
@@ -505,8 +505,8 @@
       function renderStats() {
         const totals = viewData.totals;
         const stats = [
-          { label: 'Total spending', value: fmt(viewData.grandTotal), sub: '4 fiscal years' },
-          ...FY.map(fy => ({ label: fy, value: fmt(totals[fy]), sub: fy === 'FY26' ? 'partial' : 'full year' })),
+          { label: 'Total spending', value: fmt(viewData.grandTotal), sub: `${FY.length} fiscal years` },
+          ...FY.map(fy => ({ label: fy, value: fmt(totals[fy]), sub: fy === FY[FY.length - 1] ? 'partial' : 'full year' })),
           { label: 'Line items', value: viewData.lineCount.toLocaleString(), sub: '' },
         ];
         $('stats').innerHTML = stats.map(s => `
@@ -523,7 +523,9 @@
         const html = FY.map(fy => {
           const amt = viewData.totals[fy];
           const pct = grandTotal > 0 ? (amt / grandTotal * 100).toFixed(1) : '0';
-          const status = fy === 'FY26' ? 'Partial — through April 2026' : `${pct}% of 4-year total`;
+          const status = fy === FY[FY.length - 1]
+          ? `Partial — through ${ROOT_DATA.meta.throughMonth}`
+          : `${pct}% of ${FY[0]}-${FY[FY.length - 1]} total`;
           const isActive = fy === state.selectedFY;
           return `
             <div class="fy-card${isActive ? ' active' : ''}" data-fy="${fy}">

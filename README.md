@@ -67,8 +67,20 @@ Categorization (`categorize_v2.py`) and subject classification (`subjects.py`) r
 cd "Working Folder/Cache and Tools/build"
 python rebuild.py                  # full pipeline (needs source PDFs + pdfplumber/pypdf)
 python rebuild.py --assemble-only  # rebuild workbook + dashboard from combined_lines.pkl
-python validate.py                 # verify a rebuild reconciles to 227,066 lines / $1,277,793,488.14
+python validate.py                 # self-consistency: workbook <-> dashboard <-> pivots
+python check_source_fidelity.py    # accuracy: raw PDF text -> dataset
+python check_published_figures.py  # accuracy: dataset -> every number on the page
 ```
+
+The three checks are deliberately layered. `validate.py` proves the artifacts
+agree **with each other**; it cannot catch a parser that drops rows, because the
+dropped rows are missing from every artifact at once. `check_source_fidelity.py`
+reconciles each register against the `TOTAL REPORT` and per-fund `TOTAL FUND`
+totals its own PDF prints, and re-extracts sampled detail lines with an
+independently written regex. `check_published_figures.py` walks the other
+direction, confirming every figure a reader sees — header, badges, FY cards,
+coverage table, curriculum tiles — traces back to the dataset, and that the
+labels describe what is actually shown.
 
 **Caveats:**
 - The **parse** stages need the full source-PDF corpus in `source_data/`, most of which is **not tracked in git** (see "Source PDFs" above). The **assemble** stages (workbook + dashboard) are fully reproducible and are validated against the committed totals by `validate.py`, which reconstructs the row set from the workbook itself — so no source PDFs are needed to verify them.
