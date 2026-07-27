@@ -50,4 +50,8 @@ history") and the git history.
 Mar/Apr/May 2026 registers ingested (227,066 lines / $1,277,793,488.14); dual FY
 columns collapsed to one keyed on issue date; parser bug dropping 16-digit budget
 units, a dashboard regex overwriting hand-written FY spans, three bad source
-dates, and a wrong BoardDocs link all fixed.
+dates, and a wrong BoardDocs link all fixed. The session then removed every
+remaining hard-coded figure from the page — including the curriculum spotlight's
+per-FY anchors, which had been masking a filter that booked $8.4M of Larson
+*School* construction as Larson *textbook* spend. Two accuracy checks added as
+tooling (`check_source_fidelity.py`, `check_published_figures.py`).
