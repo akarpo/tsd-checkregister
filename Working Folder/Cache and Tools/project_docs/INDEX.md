@@ -36,6 +36,20 @@ case: no transaction-month gap results from it.
 | **FY25** | **14,048** | **$144.4M** | **12 of 12 ✅** | standalone |
 | FY26 | 10,633 | $142.1M | 11 of 12 (Jun 2026 register not yet approved) | standalone |
 
+## Two different "gap" measures — don't conflate them
+
+- **This document's coverage table** counts *transaction* months with no
+  substantive activity. It is the one that matters for FY-by-FY analysis.
+- **`Missing_Months_FY11-FY26.xlsx`** (repo root) counts months whose *register*
+  is unavailable on BoardDocs — a source-availability audit, with the per-month
+  reason and the API probe log.
+
+They diverge because a register covers 1-2 months of prior activity, so an
+unposted register usually leaves no hole: adjacent registers carry those dates.
+FY24 is the clearest case — the Nov 2023 register was never posted, yet FY24
+has full transaction coverage. The gap audit is currently 40 months / 37
+unrecovered; the coverage table shows 7 complete fiscal years.
+
 ## Source format notes
 
 - **Standalone format (May 2020 onward)**: BoardDocs began attaching "Check register by fund X.pdf" as separate documents on the Treasurer's Report agenda item. Pentamation Enterprises format, ~30 pages each. Located at `source_data/BoardDocs_PDFs/`. *(Note: earlier versions of this doc said "Aug 2020 onward" — verified 2026-05-13 via BoardDocs API probe that the May 2020 Treasurer's Report on the 2020-07-21 meeting was already standalone.)*

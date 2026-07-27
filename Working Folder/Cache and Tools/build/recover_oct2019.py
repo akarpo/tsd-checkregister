@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent))
-from parser import LINE_RE, FUND_RE, parse_amount, parse_date, fy_for, SKIP_PREFIXES
+from parser import LINE_RE, FUND_RE, parse_amount, parse_date, SKIP_PREFIXES
 from fiscal_year import fiscal_year
 import _paths
 
@@ -88,12 +88,10 @@ dates = [r['Issue Date'] for r in rows]
 if dates:
     print(f'Issue date range: {min(dates).date()} .. {max(dates).date()}')
 
-# FY breakdown by issue date (since meeting fy=FY20)
+# FY breakdown (attribution is by issue date — see fiscal_year.py)
 from collections import Counter
-def issue_fy(d):
-    return f'FY{(d.year+1)%100:02d}' if d.month >= 7 else f'FY{d.year%100:02d}'
-ifyr = Counter(issue_fy(r['Issue Date']) for r in rows)
-print(f'Issue-Date FY: {dict(ifyr)}')
+fyr = Counter(r['Fiscal Year'] for r in rows)
+print(f'Fiscal Year: {dict(fyr)}')
 
 # Save
 out = _paths.OCT2019_PKL

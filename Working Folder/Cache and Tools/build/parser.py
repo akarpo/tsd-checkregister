@@ -56,16 +56,6 @@ def parse_date(s):
     yr = 2000 + int(yy)
     return datetime(yr, int(mo), int(dd))
 
-def fy_for(meeting_date_str: str) -> str:
-    """Fiscal year of a board MEETING (TSD FY = Jul 1 - Jun 30, named by ending year).
-
-    Retained for provenance reporting only. Line items are attributed to the FY
-    of their ISSUE DATE — see fiscal_year.py."""
-    md = datetime.strptime(meeting_date_str, '%Y-%m-%d')
-    if md.month >= 7:
-        return f'FY{(md.year + 1) % 100:02d}'
-    return f'FY{md.year % 100:02d}'
-
 def parse_pdf(path: Path) -> list[dict]:
     parent = path.stem  # filename without extension
     # Filename pattern: YYYY-MM-DD_<rest>

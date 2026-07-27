@@ -9,6 +9,11 @@ Canonical end-to-end flow:
     build workbook          (rebuild_final.build_workbook)        -> Troy_SD_Check_Register_FY11-FY26.xlsx
     build dashboard         (rebuild_dashboard_full.write_dashboard) -> index.html
 
+Fiscal-year attribution (and the repairs for issue dates that are wrong in the
+source PDFs) lives in fiscal_year.py, applied during the merge stage: every line
+item is attributed to the FY containing its issue date, on the Michigan
+Jul 1 - Jun 30 boundary.
+
 The parse stages need pdfplumber/pypdf and the full source-PDF corpus (most of
 which is NOT tracked in git — see the repo README "Source PDFs"). When you only
 have combined_lines.pkl, or want to re-emit the deliverables after a data fix,

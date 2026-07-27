@@ -13,11 +13,19 @@ Confidence from the committed lookups), rebuild the workbook to a scratch file
   C. Every rebuilt pivot reconciles to the grand total (internal consistency).
   D. The rebuilt dashboard payload reconciles to the workbook.
 
-These four are the PASS criteria. Separately, the committed workbook is a
-patchwork assembled across several script versions + a partial recovery merge,
-so its *summary* sheets differ from a clean rebuild; those differences are
-reported as informational findings (a single rebuild.py run brings them into
-sync). Run:  python validate.py
+These four are the PASS criteria. A second section reports any drift between the
+committed deliverables and a clean rebuild; it should stay empty as long as the
+committed artifacts came from `rebuild.py --assemble-only` (a single run brings
+them back into sync if not).
+
+SCOPE — this checks self-consistency, not fidelity to source. Every artifact can
+agree and still be wrong together: a parser that silently drops rows drops them
+everywhere at once, so nothing here disagrees. Reconciling against the
+`TOTAL REPORT` / `TOTAL FUND` figures each register PDF prints for itself is the
+independent check, and is what caught the 16-digit budget-unit bug on
+2026-07-27 (see project_docs/INDEX.md).
+
+Run:  python validate.py
 """
 import sys
 import json

@@ -8,7 +8,9 @@ Interactive dashboard and master workbook reconciling Troy School District (MI) 
 |---|---|
 | `index.html` | Interactive dashboard (static, all data inlined). Open in any browser. |
 | `Troy_SD_Check_Register_FY11-FY26.xlsx` | Master workbook — 7 sheets. 227,066 line items. |
-| `Missing_Months_FY11-FY26.xlsx` | Gap audit — months with no register data, summary by FY, and the BoardDocs API probe log. |
+| `Missing_Months_FY11-FY26.xlsx` | Register-availability audit — months whose check register is unavailable on BoardDocs, summary by FY, and the API probe log. |
+
+> **`Missing_Months` answers a different question than the FY coverage table.** It counts months whose *register* is missing from BoardDocs; the coverage table counts months with no *transaction* activity. A register covers 1-2 months of prior activity, so a missing register often leaves no gap in the data — FY24 is the clearest case: the Nov 2023 register was never posted, yet FY24 has full transaction coverage.
 
 ## Coverage
 
@@ -31,7 +33,7 @@ tsd-checkregister/                           ← repo root (deliverables only)
     └── Cache and Tools/
         ├── build/                           ← parser, categorizer, rebuild scripts (Python)
         ├── source_data/
-        │   └── BoardDocs_PDFs/              ← 45 standalone register PDFs tracked in git (May 2022 → Feb 2026); rest gitignored
+        │   └── BoardDocs_PDFs/              ← 48 standalone register PDFs tracked in git (May 2022 → May 2026); rest gitignored
         └── project_docs/
             └── INDEX.md                     ← provenance, FY coverage, known gaps
 ```

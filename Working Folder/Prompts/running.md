@@ -35,3 +35,19 @@ covering the major build steps.
 >
 > > One-line summary of what was asked.
 > ```
+
+Entries before 2026-07-27 were not logged at the time; the April and May 2026
+backfills are reconstructable from `project_docs/INDEX.md` ("Bug/recovery
+history") and the git history.
+
+## 2026-07-27 14:53:00
+
+> Review the repo and the published site, clone locally, then ingest the newly
+> posted registers, run a data-accuracy pass, and move to a single Jul 1 – Jun 30
+> fiscal-year attribution.
+
+[`2026-07-27_14-53-00/`](2026-07-27_14-53-00/prompt_2026-07-27_14-53-00.md) —
+Mar/Apr/May 2026 registers ingested (227,066 lines / $1,277,793,488.14); dual FY
+columns collapsed to one keyed on issue date; parser bug dropping 16-digit budget
+units, a dashboard regex overwriting hand-written FY spans, three bad source
+dates, and a wrong BoardDocs link all fixed.

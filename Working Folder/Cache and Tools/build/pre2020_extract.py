@@ -17,7 +17,7 @@ from datetime import datetime
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(Path(__file__).parent))
-from parser import LINE_RE, FUND_RE, parse_amount, parse_date, fy_for, SKIP_PREFIXES
+from parser import LINE_RE, FUND_RE, parse_amount, parse_date, SKIP_PREFIXES
 from fiscal_year import fiscal_year
 import _paths
 import pdfplumber
