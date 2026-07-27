@@ -100,7 +100,8 @@ by an adjacent register.
   2. **Parser fix — 16-digit budget units.** `LINE_RE` capped the budget-unit group at `\d{3,15}`, so detail lines on capital-projects fund 423 (e.g. `4230514556430000`) were silently dropped. Caught by reconciling against the PDFs' own `TOTAL REPORT`: the Apr 2026 register was short exactly $35,188.11 across 4 lines. Widened to `\d{3,20}`; all 48 standalone registers now reconcile (see "Parser provenance").
   3. **Dashboard regex fix.** `write_dashboard` ran a blanket `re.sub(r'FY\d\d-FY\d\d', ...)` across the whole page, so the 2026-06-02 rebuild overwrote 8 hand-written adoption-cycle spans in the curriculum narrative — "Cycle 1 (FY12-FY15)" had become "Cycle 1 (FY11-FY26)", "peaked off-cycle in FY17-FY18" became "...in FY11-FY26", and so on. Now anchored to the five real site-wide range labels; the 8 originals were restored from commit `13169de`.
   4. **Issue-date corrections.** The 3 implausible dates are repaired against source — see "Date anomalies".
-  5. **Two dashboard header fixes.** The "Source: Troy SD BoardDocs" link pointed at `go.boarddocs.com/mi/troymi/` (Troy city) instead of `/mi/troysd/` (the school district) — the only wrong slug in the project. And the hand-written "FY26 partial (through April 2026)" caption is now derived by `write_dashboard` from the last transaction month carrying 100+ line items, so it tracks the data instead of going stale.
+  5. **Curriculum spotlight and coverage tables rebuilt from the data.** Both were hand-maintained. The spotlight ran on `split_curriculum_pd_v2.py`, which applied a computed PD percentage to a **hard-coded per-FY total** for three of the four swimlanes and printed JS arrays to paste into `index.html`; the coverage table was typed by hand. Now `build/curriculum.py` and `build/coverage.py` derive both, they travel in the dashboard payload, and the page renders from it — see "Curriculum swimlanes" below for what the numbers moved to and why.
+  6. **Two dashboard header fixes.** The "Source: Troy SD BoardDocs" link pointed at `go.boarddocs.com/mi/troymi/` (Troy city) instead of `/mi/troysd/` (the school district) — the only wrong slug in the project. And the hand-written "FY26 partial (through April 2026)" caption is now derived by `write_dashboard` from the last transaction month carrying 100+ line items, so it tracks the data instead of going stale.
 - **2026-06-02 pipeline consolidation + deliverable regeneration**: The build pipeline was consolidated into a single portable `rebuild.py` + `validate.py` under `build/` (machine-specific `C:\Dev` / `%TEMP%` paths removed; the two lost classification lookups re-derived from committed artifacts into `build/lookups/`). The workbook and `index.html` were then regenerated from the committed data via `rebuild.py --assemble-only`, resolving two inconsistencies in the prior (patchwork) artifacts: the dashboard data had lagged the workbook at 222,132 lines (now 224,267, matching), and the workbook's README/pivot/PD-summary sheets had been built by mixed script versions. Because the original per-row categorization was never persisted (the dashboard retained only the top-25 vendors per category), regeneration re-derives categories from the committed seed (`vendor_categories.json`) — a one-time **~0.56% category restatement** (~$6.9M of $1.227B, entirely long-tail vendors below the top-25 cutoff; grand total and per-FY totals unchanged). Categorization is now deterministic and reproducible from the committed seed.
 
 ## Date anomalies (3 lines) — corrected 2026-07-27
@@ -140,6 +141,52 @@ restored (see "Source PDFs in repo").
 ## Categorization
 
 `categorize_v2.py` applies a vendor-lookup-first rule (built from FY23-FY26 vendor frequencies) with Michigan PSAM function-code fallback. New vendors that appear only in FY11-FY19 get categorized purely by function-code rules. Estimated category-level accuracy is ~83% (matches original payload to within 2% for 7 of 28 categories; remaining categories have 5-50% drift). Grand totals exact.
+
+## Curriculum swimlanes (dashboard spotlight)
+
+`build/curriculum.py` classifies each line into one of four swimlanes — K-5 ELA,
+K-5 Math, 6-12 ELA, 6-12 Math — and splits it into curriculum/materials vs
+professional development. Every figure the spotlight shows is derived from the
+rows; nothing is written down.
+
+Published totals moved when the hard-coded anchors were retired on 2026-07-27:
+
+| Swimlane | Retired anchor | Derived | PD share |
+|---|---:|---:|---:|
+| K-5 ELA | $3.75M | $3.38M | 48% |
+| K-5 Math | $3.46M | $3.11M | 43% |
+| 6-12 ELA | (was already derived) | $1.50M | 5% |
+| 6-12 Math | $1.69M | $1.31M | 6% |
+| **Combined** | **$10.46M** | **$9.30M** | |
+
+Three things changed the numbers, in order of size:
+
+1. **A false positive the anchors were hiding.** The 6-12 Math filter matched
+   `LARSON` in a description to catch Ron Larson's Big Ideas texts. *Larson* is
+   also a Troy school building, so the rule swept in **$8.4M** of construction,
+   utilities, paving, architecture and transport for Larson School — Barton
+   Malow alone was $4.7M, most of it in bond fund 414. Because the published
+   totals were anchored, none of this ever surfaced. The token now only counts
+   when the vendor is an actual textbook publisher.
+2. **A false negative.** Illustrative Math ships through Imagine Learning, and
+   only the rows whose truncated description happened to read `ILLUSTRATIVE`
+   were caught — $44K of $748K. The IM product lines (`IMAGINE IM`,
+   `IM MATHEMATICS`, `IM ALGEBRA`) are now matched directly, while the same
+   vendor's Edgenuity licences and Imagine Language & Literacy are correctly
+   left out.
+3. **No more double counting.** 60 rows matched both grade bands of one subject
+   — nearly all function-code 221 (improvement of instruction), which is
+   grade-neutral. Summing lanes counted them twice. `assign_lane()` now places
+   every row in exactly one lane, resolving by function code first (112/113
+   secondary, 111 elementary), then by wording ("GEOMETRY COHORT" is secondary
+   PD, "GRADE K" is elementary), defaulting to elementary. This is why 6-12 ELA's
+   PD share fell from 11% to 5%: the TCRWP "Units of Study" PD is elementary and
+   moved to K-5 ELA.
+
+The swimlane filters remain tuned heuristics over 19-character truncated vendor
+names and descriptions — that is the analytical judgement in the module, and it
+is worth re-reading when a new adoption lands. What is no longer true is that a
+bad rule can hide behind a fixed total.
 
 ## Subject classification (Curriculum_PD sheet)
 

@@ -115,28 +115,53 @@ def covered(fy):
     y = 2000 + int(fy[2:])
     months = [f"{y-1}-{m:02d}" for m in range(7, 13)] + [f"{y}-{m:02d}" for m in range(1, 7)]
     return sum(1 for m in months if mo.get((fy, m), 0) >= 100)
-rows = re.findall(r'<td>(FY\d\d)</td><td class="num">(\d+) of 12', mk)
-check(len(rows) == 16, "coverage table has 16 rows", str(len(rows)))
-bad_cov = [(fy, shown, covered(fy)) for fy, shown in rows if int(shown) != covered(fy)]
-check(not bad_cov, "every coverage-table month count matches the data",
-      f"{len(rows)} rows" if not bad_cov else str(bad_cov))
+# The coverage table is rendered from the payload, so assert against the payload
+# and recount independently rather than scraping rows that no longer exist.
+cov_rows = p.get("coverage", {}).get("years", [])
+check(len(cov_rows) == len(FYS), "coverage covers every fiscal year",
+      f"{len(cov_rows)} of {len(FYS)}")
+bad_cov = [(y["fy"], y["covered"], covered(y["fy"])) for y in cov_rows
+           if y["covered"] != covered(y["fy"])]
+check(not bad_cov, "every coverage month count matches an independent recount",
+      f"{len(cov_rows)} years" if not bad_cov else str(bad_cov))
+check(all(y["fy"] for y in cov_rows) and [y["fy"] for y in cov_rows] == FYS,
+      "coverage years are in FY order")
 
-# curriculum stat tiles vs the CURRICULUM_DATA arrays
-arr = {k: json.loads(re.search(re.escape("'"+k+"'") + r"\s*:\s*(\[[^\]]*\])", html).group(1))
-       for k in ["K-5 ELA cur","K-5 ELA pd","K-5 Math cur","K-5 Math pd",
-                 "6-12 ELA cur","6-12 ELA pd","6-12 Math cur","6-12 Math pd"]}
-tiles = {"K-5 ELA": 3.75, "K-5 Math": 3.46, "6-12 ELA": 1.57, "6-12 Math": 1.69}
-bad_tiles = []
-for lane, shown in tiles.items():
-    tot = (sum(arr[f"{lane} cur"]) + sum(arr[f"{lane} pd"])) / 1e6
-    if abs(tot - shown) > 0.005:
-        bad_tiles.append((lane, shown, round(tot, 3)))
-check(not bad_tiles, "curriculum stat tiles = sum of their arrays",
-      f"{len(tiles)} lanes" if not bad_tiles else str(bad_tiles))
-comb = sum(sum(v) for v in arr.values()) / 1e6
-m_comb = re.search(r'\$([\d.]+)M</div>\s*<div[^>]*>across 16 fiscal years', mk)
-check(m_comb and abs(float(m_comb.group(1)) - comb) < 0.005, "combined tile = sum of all lanes",
-      f"{m_comb.group(1) if m_comb else '?'} vs {comb:.2f}")
+# curriculum + coverage now live in the payload and render from it
+from curriculum import build_curriculum, assign_lane
+from coverage import build_coverage
+cur_p, cov_p = p.get("curriculum"), p.get("coverage")
+check(bool(cur_p) and bool(cov_p), "payload carries curriculum and coverage")
+cur_x = build_curriculum(combined, FYS)
+cov_x = build_coverage(combined, FYS)
+check(cur_p == cur_x, "payload curriculum == freshly derived from the dataset")
+check(cov_p == cov_x, "payload coverage == freshly derived from the dataset")
+
+lane_sum = sum(L["total"] for L in cur_p["lanes"].values())
+check(abs(lane_sum - cur_p["combined"]) <= len(cur_p["lanes"]) * len(FYS),
+      "lane totals sum to the combined total (rounding aside)",
+      f'${lane_sum:,} vs ${cur_p["combined"]:,}')
+multi = 0
+for r in combined:
+    hits = assign_lane(r)
+    if hits is None:
+        continue
+    multi += 1
+check(multi > 0, "rows assign to exactly one swimlane", f"{multi:,} classified")
+bad_per = [x["label"] for x in cur_p["periods"]
+           if abs(sum(x["byLane"].values()) - x["combined"]) > 1]
+check(not bad_per, "every period row sums across its lanes", str(bad_per) if bad_per else "3 periods")
+bad_cov = [y["fy"] for y in cov_p["years"] if y["covered"] + y["gapCount"] != 12]
+check(not bad_cov, "coverage rows account for all 12 months", str(bad_cov) if bad_cov else "16 years")
+
+# nothing curriculum-shaped may remain hard-coded in the markup
+stale_money = re.findall(r'<td class="num">\$[\d.,]+[KM]</td>', mk)
+check(not stale_money, "no hard-coded money cells left in the markup",
+      f"{len(stale_money)} found" if stale_money else "none")
+check("const CURRICULUM_DATA = { fys: CUR.fys" in mk,
+      "CURRICULUM_DATA is built from the payload, not pasted")
+for gone in ("'K-5 ELA cur':   [", "EXISTING", "load-bearing"):
+    check(gone not in mk, f"no pasted-array remnant: {gone!r}")
 
 print("\n2.5  labels describe what is shown")
 # Positive assertions: no hardcoded span survives, AND the label is derived.

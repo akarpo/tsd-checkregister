@@ -18,7 +18,8 @@ one. Do not resurrect them without porting to `../fiscal_year.py`.
 | `rebuild_with_issue_fy.py` | `../fiscal_year.py` + `../rebuild_after_bundlefix.py` | Added a second, issue-date-keyed FY column alongside the meeting-keyed one. Both are obsolete: since 2026-07-27 there is a single `Fiscal Year`, derived from the issue date in `fiscal_year.py` and applied during the merge stage. |
 | `rebuild_workbook.py` | `../rebuild_final.py` | Post-2020-only workbook builder (read `all_lines.pkl`); replaced by the full FY11-FY26 builder. |
 | `rebuild_dashboard.py` | `../rebuild_dashboard_full.py` | Post-2020-only dashboard payload (read `all_lines.pkl`); replaced by the full FY11-FY26 dashboard builder. |
-| `split_curriculum_pd.py` | `../split_curriculum_pd_v2.py` | v1 of the curriculum/PD spotlight split; v2 is the kept (semi-manual) generator. |
+| `split_curriculum_pd.py` | `../curriculum.py` | v1 of the curriculum/PD spotlight split. |
+| `split_curriculum_pd_v2.py` | `../curriculum.py` | Semi-manual generator: it applied a computed PD percentage to a **hard-coded per-FY total** for three of the four swimlanes, then printed JS arrays to paste into `index.html` by hand. The anchors came from the original FY23-FY26 build and were never refreshed, so they did not move when registers were ingested — and they masked a filter bug that booked $8.4M of Larson *School* construction as Larson *textbook* spend. `curriculum.py` derives every figure from the rows and feeds the dashboard payload directly. |
 | `expand_subject_lookup.py` | `../build_lookups.py` | Its hand-identified vendor→subject `EXPANDED` table is now embedded in `build_lookups.py`, which emits the committed `lookups/vendor_subject.json`. |
 | `tcrwp_post2018_search.py` | — | One-off ad-hoc search utility (TCRWP vendor lines); never part of the build. |
 

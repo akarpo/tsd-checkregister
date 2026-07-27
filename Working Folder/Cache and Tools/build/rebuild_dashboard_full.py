@@ -14,6 +14,8 @@ from collections import defaultdict
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _paths
+from curriculum import build_curriculum
+from coverage import build_coverage
 
 INSTRUCTIONAL = {
     'Instruction — Substitute Teachers (General Classes)',
@@ -144,6 +146,8 @@ def build_payload(combined):
         },
     }
     payload['all']['subjects'] = build_subjects(combined, fys)
+    payload['curriculum'] = build_curriculum(combined, fys)
+    payload['coverage'] = build_coverage(combined, fys)
     return payload
 
 
