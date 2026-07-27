@@ -8,9 +8,10 @@ interface during the initial pull from BoardDocs. The original prompts were
 
 > **Note on figures below:** Sections 1-4 describe the *original* FY23-FY26 build
 > (≈47,918 rows, a 7-sheet workbook, ~45 monthly PDFs). The project has since been
-> extended to FY11-FY26 — **224,267 line items** across an **8-sheet** workbook (the
-> `By Issue-Date FY x Fund` sheet was added during the FY11-FY22 backfill). See the
-> root [`README.md`](README.md) for current totals.
+> extended to FY11-FY26 — **227,066 line items** across a **7-sheet** workbook. Note
+> that the original build keyed fiscal year to the approving board meeting; as of
+> 2026-07-27 a single `Fiscal Year` column is derived from the transaction's issue
+> date. See the root [`README.md`](README.md) for current totals.
 
 This file is a scaffold for two purposes:
 

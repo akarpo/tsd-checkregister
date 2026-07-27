@@ -103,6 +103,29 @@ def build_subjects(lines, fy_list):
     return out
 
 
+def latest_substantive_month(combined, floor=100):
+    """Last transaction month with a real disbursement run, as 'Month YYYY'.
+
+    Registers trail their activity, so the newest register still sweeps up a
+    handful of next-month checks; the raw max issue date would overstate
+    coverage by a month. Only months carrying `floor`+ line items count.
+    """
+    counts = defaultdict(int)
+    for r in combined:
+        d = r.get('Issue Date')
+        if hasattr(d, 'year'):
+            counts[(d.year, d.month)] += 1
+    full = [k for k, n in counts.items() if n >= floor]
+    if not full:
+        return ''
+    y, m = max(full)
+    return f'{MONTHS[m - 1]} {y}'
+
+
+MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December']
+
+
 def build_payload(combined):
     """Pure: combined rows -> dashboard payload dict (matches the committed schema)."""
     fys = sorted({r['Fiscal Year'] for r in combined})
@@ -117,6 +140,7 @@ def build_payload(combined):
             'totalLines': len(combined),
             'fyRange': f'{fys[0]}-{fys[-1]}',
             'sourceCount': len({r['Source Meeting'] for r in combined}),
+            'throughMonth': latest_substantive_month(combined),
         },
     }
     payload['all']['subjects'] = build_subjects(combined, fys)
@@ -135,7 +159,17 @@ def write_dashboard(payload, html_path):
         html, count=1, flags=re.DOTALL
     )
     fy_range = f'FY{fys[0][2:]}-{fys[-1]}'
-    html = re.sub(r'FY\d\d-FY\d\d', fy_range, html)
+    # Only the site-wide range labels track the data range. A blanket
+    # FY\d\d-FY\d\d substitution also rewrites the hand-written FY spans in the
+    # curriculum narrative ("Cycle 1 (FY12-FY15)", "peaked off-cycle in
+    # FY17-FY18", ...), which are adoption-cycle windows, not the corpus range —
+    # that is what collapsed them all to FY11-FY26 in the 2026-06-02 rebuild.
+    for anchor in (r'(<title>Troy SD Check Register Reconciliation · )FY\d\d-FY\d\d',
+                   r'(All disbursements )FY\d\d-FY\d\d',
+                   r'(curriculum spend · )FY\d\d-FY\d\d( spotlight)',
+                   r'(every fund, every line item, )FY\d\d-FY\d\d',
+                   r'(Troy_SD_Check_Register_)FY\d\d-FY\d\d(\.xlsx)'):
+        html = re.sub(anchor, lambda m: m.group(1) + fy_range + (m.group(2) if m.lastindex and m.lastindex > 1 else ''), html)
     def fmt_m(n): return f'${n/1_000_000:.0f}M'
     total = payload['all']['grandTotal']
     op_total = payload['operating']['grandTotal']
@@ -146,6 +180,9 @@ def write_dashboard(payload, html_path):
         html
     )
     html = re.sub(r'\d+ monthly check register PDFs', f'{payload["meta"]["sourceCount"]} monthly check register PDFs', html)
+    if payload['meta'].get('throughMonth'):
+        html = re.sub(r'FY\d\d partial \(through [A-Z][a-z]+ \d{4}\)',
+                      f'{fys[-1]} partial (through {payload["meta"]["throughMonth"]})', html)
     html_path.write_text(html, encoding='utf-8')
     return html_path
 

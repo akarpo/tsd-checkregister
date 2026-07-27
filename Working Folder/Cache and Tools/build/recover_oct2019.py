@@ -5,6 +5,7 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent))
 from parser import LINE_RE, FUND_RE, parse_amount, parse_date, fy_for, SKIP_PREFIXES
+from fiscal_year import fiscal_year
 import _paths
 
 from pypdf import PdfReader
@@ -25,7 +26,6 @@ def parse_with_pypdf(pdf_path):
         meeting_date = f'20{yy}-{mm}-{dd}'
     else:
         meeting_date = ''
-    fy = fy_for(meeting_date) if meeting_date else ''
     print(f'Meeting date: {meeting_date}, FY: {fy}')
 
     rows = []
@@ -56,15 +56,16 @@ def parse_with_pypdf(pdf_path):
                 continue
             bu = lm.group('bu')
             func = bu[6:9] if bu.isdigit() and len(bu) >= 9 else ''
+            issue_date = parse_date(lm.group('date'))
             rows.append({
                 'Source Meeting': meeting_date,
-                'Fiscal Year':    fy,
+                'Fiscal Year':    fiscal_year(issue_date),
                 'Fund':           cur_fund or '',
                 'Fund Name':      cur_fund_name or '',
                 'Cash Acct':      lm.group('cash'),
                 'Check No':       lm.group('check'),
                 'Voided':         lm.group('voided') or '',
-                'Issue Date':     parse_date(lm.group('date')),
+                'Issue Date':     issue_date,
                 'Vendor ID':      lm.group('vendid'),
                 'Vendor Name':    lm.group('vendor').strip(),
                 'Budget Unit':    bu,

@@ -2,7 +2,8 @@
 - Load new pre2020_lines.pkl (with corrected meeting dates)
 - Append Oct 2019 recovered rows (still needed because pypdf fallback was added mid-run)
 - Append FY21+ all_lines.pkl
-- Add Issue Date FY column
+- Repair known-bad source issue dates, then attribute each line to the FY
+  containing its issue date (Jul 1 - Jun 30) — see fiscal_year.py
 - Apply categorization + subject classification
 - Save combined_lines.pkl, then defer to build_combined_wb.py for workbook"""
 import sys, pickle
@@ -13,6 +14,7 @@ from collections import Counter
 sys.path.insert(0, str(Path(__file__).parent))
 from categorize_v2 import categorize
 from subjects import classify_subject, classify_confidence
+from fiscal_year import assign_fiscal_years
 import _paths
 
 BUILD = _paths.BUILD
@@ -32,16 +34,14 @@ for r in pre:
 combined = pre + oct19 + post
 print(f'Combined: {len(combined):,}', flush=True)
 
-# Add Issue Date FY
-def issue_fy(d):
-    if not isinstance(d, datetime): return ''
-    return f'FY{(d.year+1)%100:02d}' if d.month >= 7 else f'FY{d.year%100:02d}'
-
 # Subject + confidence classification now live in subjects.py (committed lookup).
 
-print('Re-applying categorization + subjects + Issue-Date FY...', flush=True)
+corrected = assign_fiscal_years(combined)
+print(f'Repaired {corrected} known-bad source issue date(s); '
+      'Fiscal Year attributed from issue date (Jul 1 - Jun 30)', flush=True)
+
+print('Re-applying categorization + subjects...', flush=True)
 for r in combined:
-    r['Issue Date FY'] = issue_fy(r['Issue Date'])
     r['Category'] = categorize(r.get('Vendor Name',''), r.get('Fund',''),
                               r.get('Function Code',''), r.get('Account',''),
                               r.get('Budget Unit',''), r.get('Amount', 0))
@@ -56,10 +56,7 @@ _paths.COMBINED_PKL.write_bytes(pickle.dumps(combined))
 print(f'Saved combined_lines.pkl: {len(combined):,} rows', flush=True)
 
 # FY breakdown
-mfys = Counter(r['Fiscal Year'] for r in combined)
-ifys = Counter(r['Issue Date FY'] for r in combined if r['Issue Date FY'])
-print(f'\nMeeting-FY breakdown:')
-for fy in sorted(mfys): print(f'  {fy}: {mfys[fy]:,}')
-print(f'\nIssue-Date FY breakdown:')
-for fy in sorted(ifys): print(f'  {fy}: {ifys[fy]:,}')
+fys = Counter(r['Fiscal Year'] for r in combined)
+print(f'\nFiscal-year breakdown (by issue date):')
+for fy in sorted(fys): print(f'  {fy}: {fys[fy]:,}')
 print(f'\nGrand total: ${sum(r["Amount"] for r in combined):,.2f}')

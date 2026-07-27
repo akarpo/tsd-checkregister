@@ -1,61 +1,78 @@
 # Troy School District Check Registers
 
 Source: BoardDocs (https://go.boarddocs.com/mi/troysd/Board.nsf/Public)
-Pulled: 2026-04-26 (initial FY23-FY26), 2026-04-30 (FY21-FY22 backfill), 2026-05-01 (FY12-FY19 backfill from embedded registers + bundle-date fix + Oct 2019 pypdf recovery), 2026-05-13 (BoardDocs API probe — recovered 3 standalone registers for Jun/Jul 2020 and Jan 2021; see "Bug/recovery history" below)
-Total records: 224,267 line items, $1,227,024,514.73 *(post 2026-05-13 merge: +2,135 lines / +$24,300,137.47 from 3 recovered standalone registers; prior to this merge the workbook reflected 222,132 lines / $1,202,724,377.26)*
-Source PDFs: ~236 (71 standalone + 84 embedded productive + 1 pypdf-recovered + 80 included from re-extraction with widened filter)
+Pulled: 2026-04-26 (initial FY23-FY26), 2026-04-30 (FY21-FY22 backfill), 2026-05-01 (FY12-FY19 backfill from embedded registers + bundle-date fix + Oct 2019 pypdf recovery), 2026-05-13 (BoardDocs API probe — recovered 3 standalone registers for Jun/Jul 2020 and Jan 2021), 2026-07-27 (Mar/Apr/May 2026 registers + single-FY refactor; see "Bug/recovery history" below)
+Total records: 227,066 line items, $1,277,793,488.14 *(post 2026-07-27 merge: +2,799 lines / +$50,768,973.41 from the Mar/Apr/May 2026 registers; prior to this merge the workbook reflected 224,267 lines / $1,227,024,514.73)*
+Source PDFs: ~239 (74 standalone + 84 embedded productive + 1 pypdf-recovered + 80 included from re-extraction with widened filter)
 
-## Coverage by fiscal year (TSD FY = Jul 1 – Jun 30, named by ending year)
+## Coverage by fiscal year (Michigan FY = Jul 1 – Jun 30, named by ending year)
 
-| FY | Lines (Meeting FY) | Amount (Meeting FY) | Months captured | Source format |
+Every line item is attributed to the FY containing its **issue date**. A month
+counts as covered when it holds 100+ line items; below that it is only stray
+adjustments carried in by an adjacent register, not a real disbursement run.
+
+Note that coverage reads better here than under the retired meeting-keyed
+scheme, and legitimately so: a register covers 1-2 months of prior activity, so
+an unposted register does not necessarily leave a hole — adjacent registers
+usually carry those dates. FY24's missing Nov 2023 register is the clearest
+case: no transaction-month gap results from it.
+
+| FY | Lines | Amount | Months covered | Source format |
 |---|---:|---:|---|---|
-| FY11 | 10,300 | $20.9M | 4 of 12 (Jan-Jun 2011 only — bundle starts Jan 2011) | embedded |
-| FY12 | 17,251 | $34.0M | 8 of 12 | embedded |
-| FY13 | 10,525 | $24.0M | 7 of 12 | embedded |
-| FY14 | 12,182 | $25.8M | 8 of 12 | embedded |
-| FY15 | 20,335 | $80.2M | 9 of 12 | embedded |
-| FY16 | 17,628 | $98.2M | 10 of 12 | embedded |
-| **FY17** | **19,653** | **$116.8M** | **12 of 12 ✅** | embedded |
-| FY18 | 16,310 | $81.8M | 10 of 12 | embedded |
-| FY19 | 17,675 | $104.1M | 11 of 12 | embedded |
-| FY20 | 7,883 | $37.8M | 5 of 12 | embedded + 1 pypdf-recovered |
-| **FY21** | **10,812** | **$92.4M** | **12 of 12 ✅** *(post 2026-05-13 merge — was 10 of 12 before)* | standalone |
-| **FY22** | **12,249** | **$73.4M** | **12 of 12 ✅** | standalone |
-| **FY23** | **11,851** | **$76.3M** | **12 of 12 ✅** | standalone |
-| FY24 | 12,617 | $107.6M | 11 of 12 (Nov 2023 missing) | standalone |
-| **FY25** | **13,920** | **$140.3M** | **12 of 12 ✅** | standalone |
-| FY26 | 10,169 | $106.5M | 10 of 12 (in progress) | standalone |
+| FY11 | 12,066 | $24.3M | 8 of 12 (Jul-Oct 2010 absent — corpus starts Nov 2010) | embedded |
+| **FY12** | **17,360** | **$34.2M** | **12 of 12 ✅** | embedded |
+| FY13 | 13,183 | $30.1M | 10 of 12 (Apr, May 2013) | embedded |
+| FY14 | 14,817 | $32.7M | 11 of 12 (Sep 2013) | embedded |
+| FY15 | 18,050 | $77.5M | 11 of 12 (Dec 2014) | embedded |
+| **FY16** | **19,257** | **$107.6M** | **12 of 12 ✅** | embedded |
+| **FY17** | **18,065** | **$109.4M** | **12 of 12 ✅** | embedded |
+| FY18 | 16,094 | $86.2M | 10 of 12 (Apr, May 2018) | embedded |
+| FY19 | 17,374 | $95.0M | 11 of 12 (May 2019) | embedded |
+| FY20 | 8,243 | $47.6M | 6 of 12 (Nov 2019 - Apr 2020) | embedded + 1 pypdf-recovered |
+| FY21 | 11,019 | $85.5M | 11 of 12 (Nov 2020) | standalone |
+| **FY22** | **12,459** | **$76.4M** | **12 of 12 ✅** | standalone |
+| **FY23** | **12,124** | **$78.1M** | **12 of 12 ✅** | standalone |
+| **FY24** | **12,274** | **$106.7M** | **12 of 12 ✅** | standalone |
+| **FY25** | **14,048** | **$144.4M** | **12 of 12 ✅** | standalone |
+| FY26 | 10,633 | $142.1M | 11 of 12 (Jun 2026 register not yet approved) | standalone |
 
 ## Source format notes
 
 - **Standalone format (May 2020 onward)**: BoardDocs began attaching "Check register by fund X.pdf" as separate documents on the Treasurer's Report agenda item. Pentamation Enterprises format, ~30 pages each. Located at `source_data/BoardDocs_PDFs/`. *(Note: earlier versions of this doc said "Aug 2020 onward" — verified 2026-05-13 via BoardDocs API probe that the May 2020 Treasurer's Report on the 2020-07-21 meeting was already standalone.)*
 - **Embedded format (2011-2019)**: Check registers are pages within larger meeting-packet PDFs (typically pages 30-100 of 100-250 page packets), same Pentamation format but with em-dash characters (`−`) instead of ASCII hyphens. The pre-2020 extractor normalizes dashes. Productive source PDFs copied to `source_data/BoardDocs_PDFs_pre2020/`.
 
-## Two FY columns — meeting date vs transaction date
+## One fiscal year — the transaction date governs
 
-The workbook exposes both:
-- **`Fiscal Year`** = FY of the board MEETING that approved the register
-- **`Issue Date FY`** = FY of the actual TRANSACTION DATE (true FY)
+Michigan school districts run a July 1 – June 30 fiscal year, named by the
+ending year (FY26 = 2025-07-01 through 2026-06-30). Every line item is
+attributed to the FY containing its **issue date** — the date the disbursement
+was actually made. There is a single `Fiscal Year` column.
 
-These differ because each register typically covers 1-2 months of *prior* activity. For accurate FY-by-FY analysis, use Issue Date FY (sheet "By Issue-Date FY x Fund" + "PD by Subject" pivot).
+`Source Meeting` is retained as provenance (which board meeting approved the
+register) but does not drive attribution. The earlier scheme carried a second,
+meeting-keyed FY column; because a register is approved 1-2 months after the
+activity it covers, that convention shifted spend into the following year and,
+at the July boundary, into the following FY entirely — the May 2026 register,
+approved 2026-07-22, would have opened a spurious FY27 holding FY26 money.
+Retired 2026-07-27.
 
-## Specific known gaps (months with no register data)
+## Specific known gaps (transaction months with no substantive register data)
 
-- **FY11**: Jul-Dec 2010 (6 months, before our corpus starts) + Aug & Dec 2011 workshops with no register
-- **FY12**: 2011-07, 2011-09, 2012-02, 2012-05 (4 missing months)
-- **FY13**: 2012-07, 2012-08, 2012-09, 2013-03, 2013-06 (5 missing — the 2013-03 Wksp may have had a register but workshop coverage is spotty)
-- **FY14**: 2013-07, 2013-08, 2013-10, 2014-06 (4 missing — Reg meetings exist but no register attached)
-- **FY15**: 2014-07, 2014-09, 2015-02 (3 missing)
-- **FY16**: 2015-07, 2015-09 (2 missing)
-- **FY17**: complete ✅
-- **FY18**: 2017-07, 2018-06 (2 missing)
-- **FY19**: 2018-07 only (1 missing — Jul 2018)
-- **FY20**: 2019-07, 2020-01 through 2020-05 (6 missing — biggest residual gap; the BoardDocs transition window). *Jun 2020 ingested 2026-05-13 — adds ~$9.8M of FY20-attributed transactions to "By Issue-Date FY x Fund" (Meeting FY for that register is FY21 since it was approved at the Aug 2020 board meeting). May 2020 is listed on BoardDocs but the AWS S3 backend returns 404 for all attachments — likely lifecycle-deleted.*
-- **FY21**: complete after 2026-05-13 recovery ✅. *Jul 2020 and Jan 2021 registers ingested — FY21 Meeting-FY now 12 of 12.*
-- **FY22-FY23**: complete ✅
-- **FY24**: 2023-11 (1 missing — Nov 2023 register was never posted; we have a Sep 2023 + Oct 2023 from the 2023-12-12 meeting but no Nov)
-- **FY25**: complete ✅
-- **FY26**: 2026-05, 2026-06 (in progress, not yet held)
+Months below hold fewer than 100 line items — only stray adjustments carried in
+by an adjacent register.
+
+- **FY11**: 2010-07 through 2010-10 (4 months, before the corpus starts)
+- **FY12**: complete ✅
+- **FY13**: 2013-04 (4 lines), 2013-05 (5 lines)
+- **FY14**: 2013-09 (1 line)
+- **FY15**: 2014-12 (4 lines)
+- **FY16, FY17**: complete ✅
+- **FY18**: 2018-04 (5 lines), 2018-05 (51 lines)
+- **FY19**: 2019-05 (16 lines)
+- **FY20**: 2019-11 through 2020-04 (6 months — the biggest residual gap; the BoardDocs transition window). *May 2020 is listed on BoardDocs but the AWS S3 backend returns 404 for all attachments — likely lifecycle-deleted.*
+- **FY21**: 2020-11 (3 lines)
+- **FY22, FY23, FY24, FY25**: complete ✅ *(FY24 despite the Nov 2023 register never being posted — adjacent registers carry those dates)*
+- **FY26**: 2026-06 (1 line) — the June 2026 register is approved at the August 2026 meeting, not yet held. Complete through May 2026.
 - Pre-FY11 BoardDocs records are not available in the local TroySD corpus.
 
 ## Bug/recovery history
@@ -64,15 +81,46 @@ These differ because each register typically covers 1-2 months of *prior* activi
 - **2026-05-01 Oct 2019 pypdf recovery**: The 2019-10-15 Reg meeting PDF (`101519RegMtg.pdf`) errored under pdfplumber with `'dict' object has no attribute 'decode'`. Recovered separately using `pypdf` (1,418 rows / $9.5M of FY20 data). The main extractor now has a pypdf fallback for future runs.
 - **2026-05-01 Wksp/Sp/Retreat inclusion**: Original 2011/2012 bundle filter excluded workshop/special meetings. Now includes all PDFs and lets the PENTAMATION marker decide; this caught 0 additional registers (workshops have no register attachments).
 - **2026-05-13 BoardDocs API probe + FY20/FY21 recovery**: Reviewed the 19 "Maybe" months from the gap list via direct BoardDocs API (BD-GetMeetingsList → BD-GetAgenda → BD-GetPublicFiles, using committee `A4EP6J588C05`). Found three standalone register PDFs missing from the corpus: `Check register by fund Jun 2020 period 12.pdf`, `Check register by fund Jul 2020.pdf`, `Check register by fund Jan 21.pdf`. Downloaded to `source_data/BoardDocs_PDFs/`. May 2020 register is listed on the 2020-07-21 agenda but every file in that Treasurer's Report item returns HTTP 404 from BoardDocs' S3 backend (lifecycle-cleaned). Five "Maybe" months (FY12 2011-09/2012-02/2012-05, FY13 2012-09, FY18 2018-06) have no meetings in the BoardDocs Public feed at all — those years are heavily culled (1 meeting each visible). Also corrected the "Aug 2020 onward" transition claim above to "May 2020 onward".
+- **2026-07-27 new registers + single-FY refactor + three defect fixes**: Pulled the Mar, Apr and May 2026 registers from BoardDocs (approved 2026-05-19, 2026-06-16, 2026-07-22) — +2,799 lines / +$50,768,973.41, bringing FY26 to complete through May 2026. Four changes shipped alongside:
+  1. **Single fiscal-year attribution.** The dual `Fiscal Year` (meeting) / `Issue Date FY` scheme was collapsed to one `Fiscal Year` derived from the issue date on the Jul 1 – Jun 30 boundary (`build/fiscal_year.py`). This was forced by the May 2026 register: approved 2026-07-22, it would have opened an FY27 bucket holding entirely FY26 money. Workbook drops from 8 sheets to 7 (`By Issue-Date FY x Fund` became redundant).
+  2. **Parser fix — 16-digit budget units.** `LINE_RE` capped the budget-unit group at `\d{3,15}`, so detail lines on capital-projects fund 423 (e.g. `4230514556430000`) were silently dropped. Caught by reconciling against the PDFs' own `TOTAL REPORT`: the Apr 2026 register was short exactly $35,188.11 across 4 lines. Widened to `\d{3,20}`; all 48 standalone registers now reconcile (see "Parser provenance").
+  3. **Dashboard regex fix.** `write_dashboard` ran a blanket `re.sub(r'FY\d\d-FY\d\d', ...)` across the whole page, so the 2026-06-02 rebuild overwrote 8 hand-written adoption-cycle spans in the curriculum narrative — "Cycle 1 (FY12-FY15)" had become "Cycle 1 (FY11-FY26)", "peaked off-cycle in FY17-FY18" became "...in FY11-FY26", and so on. Now anchored to the five real site-wide range labels; the 8 originals were restored from commit `13169de`.
+  4. **Issue-date corrections.** The 3 implausible dates are repaired against source — see "Date anomalies".
+  5. **Two dashboard header fixes.** The "Source: Troy SD BoardDocs" link pointed at `go.boarddocs.com/mi/troymi/` (Troy city) instead of `/mi/troysd/` (the school district) — the only wrong slug in the project. And the hand-written "FY26 partial (through April 2026)" caption is now derived by `write_dashboard` from the last transaction month carrying 100+ line items, so it tracks the data instead of going stale.
 - **2026-06-02 pipeline consolidation + deliverable regeneration**: The build pipeline was consolidated into a single portable `rebuild.py` + `validate.py` under `build/` (machine-specific `C:\Dev` / `%TEMP%` paths removed; the two lost classification lookups re-derived from committed artifacts into `build/lookups/`). The workbook and `index.html` were then regenerated from the committed data via `rebuild.py --assemble-only`, resolving two inconsistencies in the prior (patchwork) artifacts: the dashboard data had lagged the workbook at 222,132 lines (now 224,267, matching), and the workbook's README/pivot/PD-summary sheets had been built by mixed script versions. Because the original per-row categorization was never persisted (the dashboard retained only the top-25 vendors per category), regeneration re-derives categories from the committed seed (`vendor_categories.json`) — a one-time **~0.56% category restatement** (~$6.9M of $1.227B, entirely long-tail vendors below the top-25 cutoff; grand total and per-FY totals unchanged). Categorization is now deterministic and reproducible from the committed seed.
 
-## Date anomalies (3 lines)
+## Date anomalies (3 lines) — corrected 2026-07-27
 
-3 lines have implausible Issue Dates: 2 × COMPASS GROUP USA dated 2061-09-09 ($164K), 1 × ADN ADMINISTRATOR dated 2031-01-01 ($16K). Appear under "FY62" / "FY31" in the Issue-Date FY pivot. Likely OCR misreads in source PDFs. Inspect/correct against source if needed.
+3 lines carried implausible issue dates. Re-pulling the source registers from
+BoardDocs confirmed the bad dates are **printed that way in the PDFs** — a
+defect in the district's Pentamation output, not an OCR or parse error, so a
+re-parse would reintroduce them. They are now repaired in the pipeline by an
+explicit, documented override in `build/fiscal_year.py` (`DATE_CORRECTIONS`):
+
+| Check | Vendor | Source date | Corrected | Amount | Basis |
+|---|---|---|---|---:|---|
+| W22-042 | COMPASS GROUP USA | 2061-09-09 | 2021-09-09 | $163,953.74 (2 lines) | Sep 2021 register (approved 2021-11-16); day/month intact, year 61 → 21 |
+| W22-120 | A D N ADMINISTRATOR | 2031-01-01 | 2022-01-01 | $15,982.12 | Jan 2022 register (approved 2022-03-15); description "DEC 21 CLAIMS", year 31 → 22 |
+
+Both checks carry the `W22-` warrant prefix (FY22) and both corrections land in
+FY22. Under the single issue-date FY these would otherwise have created bogus
+FY62 / FY31 buckets; the FY range is now clean at FY11–FY26.
+
+## Known data-quality note — duplicate lines across adjacent registers
+
+14 line signatures (identical check number, vendor, budget unit, account, issue
+date and amount) appear under two different source meetings, all in the
+embedded-packet era: 2015-03/04, 2016-08/09, 2016-11 + 2017-01, and 2019-02/03.
+Potential double-count is **$24,467.23 of $1.278B (0.0019%)**.
+
+Left as-is deliberately: the embedded source packets are not tracked in git, so
+this cannot be adjudicated against source, and removing rows without evidence
+would silently alter historical totals. Re-check if the pre-2020 corpus is ever
+restored (see "Source PDFs in repo").
 
 ## Parser provenance
 
-- Standalone PDFs: `parser.py` (regex-based). Validated against original FY23-FY26 workbook exactly: 47,917 rows / $417,275,260.96.
+- Standalone PDFs: `parser.py` (regex-based). Validated against original FY23-FY26 workbook exactly: 47,917 rows / $417,275,260.96. Independently reconciled 2026-07-27 against the `TOTAL REPORT` figure each PDF prints for itself: **47 of 48 standalone registers match to the cent**. The one exception is the 2023-12-12 meeting, which carried two registers (Sep + Oct 2023) while only the Sep PDF is tracked in git — the Oct rows are present and correct, its PDF simply is not in the repo.
 - Embedded PDFs: `pre2020_extract.py` (same regex with em-dash normalization + bundle-date fix + pypdf fallback). No equivalent ground truth exists for these.
 
 ## Categorization
@@ -87,5 +135,5 @@ After lookup expansion, only 30 pre-2020 PD lines / $8,703 remain unclassified (
 
 ## Source PDFs in repo
 
-- `source_data/BoardDocs_PDFs/` — 68 standalone "Check register by fund" PDFs (~75 MB)
+- `source_data/BoardDocs_PDFs/` — 71 standalone "Check register by fund" PDFs (~75 MB); 48 tracked in git (May 2022 → May 2026)
 - `source_data/BoardDocs_PDFs_pre2020/` — 83 board-meeting packet PDFs containing embedded registers (~640 MB). Note: a few additional productive PDFs from the re-extraction (with widened filter) remain at the original `C:\Dev\TroySD\` path; they would need to be re-copied if a fully-self-contained build is desired.

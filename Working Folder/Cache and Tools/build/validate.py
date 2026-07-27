@@ -34,9 +34,12 @@ from rebuild_final import build_workbook
 from rebuild_dashboard_full import build_payload
 
 SCRATCH = _paths.BUILD / "_validate_scratch.xlsx"
-HEADER = ['Source Meeting', 'Fiscal Year', 'Issue Date FY', 'Fund', 'Fund Name', 'Cash Acct',
+HEADER = ['Source Meeting', 'Fiscal Year', 'Fund', 'Fund Name', 'Cash Acct',
           'Check No', 'Voided', 'Issue Date', 'Vendor ID', 'Vendor Name', 'Budget Unit',
           'Function Code', 'Account', 'Description', 'Sales Tax', 'Amount']
+
+# Curriculum_PD column offsets (sheet written by rebuild_final.build_workbook)
+PD_VENDOR, PD_DESC, PD_SUBJECT = 4, 7, 8
 
 
 def reconstruct_rows(workbook_path):
@@ -117,13 +120,13 @@ def main():
     gc = load_grid(_paths.WORKBOOK, "Curriculum_PD")
     data = [r for r in gc if r and r[0] not in (None, "Source Meeting")
             and not str(r[0]).startswith(("Filter:", "Records:"))]
-    subj_mism = sum(1 for r in data if r[9] != classify_subject(r[5] or "", r[8] or ""))
+    subj_mism = sum(1 for r in data
+                    if r[PD_SUBJECT] != classify_subject(r[PD_VENDOR] or "", r[PD_DESC] or ""))
     checks.append(("Subject lookup reproduces committed subjects", subj_mism == 0,
                    f"{len(data):,} PD lines, {subj_mism} mismatches"))
 
     # C. Each rebuilt pivot reconciles to the grand total
     for sheet, lc, ac, sk in [("By Year x Fund", 3, 4, 1),
-                              ("By Issue-Date FY x Fund", 3, 4, 1),
                               ("By Budget Unit", -2, -1, 1)]:
         g = load_grid(SCRATCH, sheet)
         lines, amt = pivot_totals(g, lc, ac, sk)
@@ -149,7 +152,7 @@ def main():
     readme_ok = f"{N:,}" in rec_line
     any_drift = not readme_ok
     print(f"  README sheet: '{rec_line}'" + ("  (in sync)" if readme_ok else f"  <- All Lines holds {N:,}"))
-    for sheet in ["By Year x Fund", "By Issue-Date FY x Fund", "By Budget Unit",
+    for sheet in ["By Year x Fund", "By Budget Unit",
                   "PD_Yearly_Summary", "PD by Subject"]:
         rc = len(load_grid(_paths.WORKBOOK, sheet))
         rr = len(load_grid(SCRATCH, sheet))

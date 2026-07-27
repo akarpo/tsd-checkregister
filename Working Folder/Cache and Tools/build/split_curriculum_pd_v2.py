@@ -137,7 +137,7 @@ def compute_ratios(membership_fn, label):
     cur = defaultdict(float); pd = defaultdict(float)
     for r in combined:
         if not membership_fn(r): continue
-        fy = r.get('Issue Date FY','')
+        fy = r.get('Fiscal Year','')
         if fy not in FYS: continue
         if is_pd(r): pd[fy] += r['Amount']
         else: cur[fy] += r['Amount']
@@ -156,7 +156,7 @@ def compute_direct(membership_fn, label):
     cur = defaultdict(float); pd = defaultdict(float)
     for r in combined:
         if not membership_fn(r): continue
-        fy = r.get('Issue Date FY','')
+        fy = r.get('Fiscal Year','')
         if fy not in FYS: continue
         if is_pd(r): pd[fy] += r['Amount']
         else: cur[fy] += r['Amount']

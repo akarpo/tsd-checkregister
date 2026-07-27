@@ -20,6 +20,10 @@ from datetime import datetime
 from pathlib import Path
 import pdfplumber
 
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fiscal_year import fiscal_year
+
 # Regex matches one detail line. The trick: vendor name is variable-width but
 # always followed by budget_unit (digits / starts with L). We use a non-greedy
 # vendor capture and require the budget unit to match a specific shape.
@@ -30,7 +34,9 @@ LINE_RE = re.compile(
     r'(?P<date>\d{2}/\d{2}/\d{2})\s+'
     r'(?P<vendid>\d{3,6})\s+'
     r'(?P<vendor>.+?)\s+'
-    r'(?P<bu>L\d+|\d{3,15})\s+'
+    # Budget units run to 16 digits on capital-projects funds (e.g. fund 423
+    # "4230514556430000"); a {3,15} cap silently dropped those detail lines.
+    r'(?P<bu>L\d+|\d{3,20})\s+'
     r'(?P<acct>[A-Z]?\d{4}|L\d+)\s+'
     r'(?P<desc>.*?)\s*'
     r'(?P<tax>-?[\d,]+\.\d{2})\s+'
@@ -52,8 +58,9 @@ def parse_date(s):
 
 def fy_for(meeting_date_str: str) -> str:
     """Fiscal year of a board MEETING (TSD FY = Jul 1 - Jun 30, named by ending year).
-    The meeting approves the prior month's register, so we use meeting date.
-    Note: FY23 = Jul 1 2022 - Jun 30 2023. So a Jul 2022 meeting → FY23."""
+
+    Retained for provenance reporting only. Line items are attributed to the FY
+    of their ISSUE DATE — see fiscal_year.py."""
     md = datetime.strptime(meeting_date_str, '%Y-%m-%d')
     if md.month >= 7:
         return f'FY{(md.year + 1) % 100:02d}'
@@ -64,7 +71,6 @@ def parse_pdf(path: Path) -> list[dict]:
     # Filename pattern: YYYY-MM-DD_<rest>
     m = re.match(r'^(\d{4}-\d{2}-\d{2})_', parent)
     meeting_date = m.group(1) if m else ''
-    fy = fy_for(meeting_date) if meeting_date else ''
 
     rows = []
     cur_fund = None
@@ -91,15 +97,16 @@ def parse_pdf(path: Path) -> list[dict]:
                 bu = lm.group('bu')
                 # Function code = positions 7-9 of budget unit (3 digits) when BU is numeric
                 func = bu[6:9] if bu.isdigit() and len(bu) >= 9 else ''
+                issue_date = parse_date(lm.group('date'))
                 rows.append({
                     'Source Meeting': meeting_date,
-                    'Fiscal Year':    fy,
+                    'Fiscal Year':    fiscal_year(issue_date),
                     'Fund':           cur_fund or '',
                     'Fund Name':      cur_fund_name or '',
                     'Cash Acct':      lm.group('cash'),
                     'Check No':       lm.group('check'),
                     'Voided':         lm.group('voided') or '',
-                    'Issue Date':     parse_date(lm.group('date')),
+                    'Issue Date':     issue_date,
                     'Vendor ID':      lm.group('vendid'),
                     'Vendor Name':    lm.group('vendor').strip(),
                     'Budget Unit':    bu,
