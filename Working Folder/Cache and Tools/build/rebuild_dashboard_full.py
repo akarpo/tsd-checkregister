@@ -184,6 +184,12 @@ def write_dashboard(payload, html_path):
         html
     )
     html = re.sub(r'\d+ monthly check register PDFs', f'{payload["meta"]["sourceCount"]} monthly check register PDFs', html)
+    # The workbook download blurb quotes the All Lines row count. It was written by
+    # hand and no rebuild touched it, so it sat at 227,066 while the page above it
+    # already said 228,640 -- and check_published_figures.py passed, because it
+    # tests the figures it knows about. Derive it like the rest.
+    html = re.sub(r'(All Lines \()[\d,]+( rows\))',
+                  lambda m: m.group(1) + f'{payload["all"]["lineCount"]:,}' + m.group(2), html)
     # Section badge + the methodology reconciliation sentence. Both were written
     # against the original FY23-FY26 build ($203M + $214M = $417M) and had gone
     # stale by a factor of three; derive them so they cannot drift again.

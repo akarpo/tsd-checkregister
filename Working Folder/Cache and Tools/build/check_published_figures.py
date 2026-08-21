@@ -91,6 +91,22 @@ check(abs(cat_sum - GRAND) < 0.01, "categories sum to grand total",
 check(p["meta"]["sourceCount"] == len({r["Source Meeting"] for r in combined}),
       "sourceCount = distinct source meetings", str(p["meta"]["sourceCount"]))
 
+# Every row count PRINTED as prose, not just the ones inside the payload. The
+# workbook download blurb quoted "All Lines (227,066 rows)" against a 228,640-row
+# dataset and every check above still passed, because they all read the payload
+# and the payload was right. A figure a reader can see is a figure worth testing.
+prose_counts = re.findall(r'All Lines \(([\d,]+) rows\)', html)
+check(bool(prose_counts) and all(int(c.replace(",", "")) == N for c in prose_counts),
+      "prose row counts = dataset",
+      f'{len(prose_counts)} found: {", ".join(prose_counts) or "none"}')
+# Anchored on the "$<total>M total" that follows, because "fewer than 100 line
+# items" is a coverage threshold in the methodology, not a dataset figure, and a
+# check that flags it is an eyeball flag rather than a gate.
+prose_items = re.findall(r'([\d,]+) line items, \$[\d,]+M total', html)
+check(bool(prose_items) and all(int(c.replace(",", "")) == N for c in prose_items),
+      "prose line-item counts = dataset",
+      f'{len(prose_items)} found: {", ".join(prose_items) or "none"}')
+
 print("\n2.4  rendered HTML literals")
 mk = re.sub(r'(<script id="data-payload"[^>]*>).*?(</script>)', r'\1[P]\2', html, flags=re.DOTALL)
 M = lambda n: f"${n/1_000_000:.0f}M"
