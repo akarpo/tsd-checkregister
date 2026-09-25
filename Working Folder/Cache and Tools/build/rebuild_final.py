@@ -170,5 +170,5 @@ def build_workbook(combined, out_path):
 if __name__ == '__main__':
     combined = pickle.loads(_paths.COMBINED_PKL.read_bytes())
     print(f'Loaded: {len(combined):,} rows', flush=True)
-    path, n, amt = build_workbook(combined, _paths.WORKBOOK)
+    path, n, amt = build_workbook(combined, _paths.workbook_path(max(r['Fiscal Year'] for r in combined)))
     print(f'Saved: {path} ({Path(path).stat().st_size:,} bytes) - {n:,} rows / ${amt:,.2f}', flush=True)

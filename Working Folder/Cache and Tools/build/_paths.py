@@ -10,7 +10,7 @@ Directory layout (relative to this file):
 
     <repo root>/
     ├── index.html                                 <- DASHBOARD
-    ├── Troy_SD_Check_Register_FY11-FY26.xlsx       <- WORKBOOK
+    ├── Troy_SD_Check_Register_FY11-FY<nn>.xlsx     <- WORKBOOK (span follows the data)
     └── Working Folder/Cache and Tools/
         ├── source_data/
         │   ├── BoardDocs_PDFs/                     <- STANDALONE_PDFS (FY21-FY26)
@@ -43,5 +43,21 @@ OCT2019_PKL = BUILD / "oct2019_recovered.pkl"  # pypdf-recovered Oct 2019 regist
 COMBINED_PKL = BUILD / "combined_lines.pkl"    # merged + classified (assemble-stage input)
 
 # --- Deliverables (repo root) ---
-WORKBOOK = REPO_ROOT / "Troy_SD_Check_Register_FY11-FY26.xlsx"
+# The workbook is named by the fiscal-year span it holds, so the name moves when a new
+# fiscal year lands (the July 2026 register opened FY27). Readers resolve the one on
+# disk; the assemble stage names it from the data (`workbook_path`) and retires the
+# previous one, so the dashboard's download link and the file can't drift apart.
+def workbook_path(fy_last):
+    """fy_last like 'FY27' -> <repo root>/Troy_SD_Check_Register_FY11-FY27.xlsx"""
+    return REPO_ROOT / f"Troy_SD_Check_Register_FY11-{fy_last}.xlsx"
+
+
+def _existing_workbook():
+    found = sorted(REPO_ROOT.glob("Troy_SD_Check_Register_FY11-FY*.xlsx"))
+    if len(found) > 1:
+        raise SystemExit(f"more than one workbook at the repo root: {[f.name for f in found]}")
+    return found[0] if found else workbook_path("FY26")
+
+
+WORKBOOK = _existing_workbook()
 DASHBOARD = REPO_ROOT / "index.html"

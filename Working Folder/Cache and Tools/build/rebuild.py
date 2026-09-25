@@ -6,7 +6,7 @@ Canonical end-to-end flow:
     parse embedded packets  (pre2020_extract.py)         -> pre2020_lines.pkl
     recover Oct 2019        (recover_oct2019.py)          -> oct2019_recovered.pkl
     merge + classify        (rebuild_after_bundlefix.py)  -> combined_lines.pkl
-    build workbook          (rebuild_final.build_workbook)        -> Troy_SD_Check_Register_FY11-FY26.xlsx
+    build workbook          (rebuild_final.build_workbook)        -> Troy_SD_Check_Register_FY11-FY<nn>.xlsx (span follows the data)
     build dashboard         (rebuild_dashboard_full.write_dashboard) -> index.html
 
 Fiscal-year attribution (and the repairs for issue dates that are wrong in the
@@ -59,8 +59,15 @@ def assemble():
         )
     combined = pickle.loads(_paths.COMBINED_PKL.read_bytes())
     print(f"[assemble] {len(combined):,} rows", flush=True)
-    _, n, amt = build_workbook(combined, _paths.WORKBOOK)
-    print(f"    workbook  -> {_paths.WORKBOOK.name}  ({n:,} rows / ${amt:,.2f})", flush=True)
+    # Name the workbook from the span in the data. A new fiscal year (July 2026 ->
+    # FY27) otherwise leaves the dashboard linking a file that does not exist.
+    fy_last = max(r["Fiscal Year"] for r in combined)
+    wb_path = _paths.workbook_path(fy_last)
+    for stale in _paths.REPO_ROOT.glob("Troy_SD_Check_Register_FY11-FY*.xlsx"):
+        if stale != wb_path:
+            stale.unlink(); print(f"    retired   {stale.name}", flush=True)
+    _, n, amt = build_workbook(combined, wb_path)
+    print(f"    workbook  -> {wb_path.name}  ({n:,} rows / ${amt:,.2f})", flush=True)
     payload = build_payload(combined)
     write_dashboard(payload, _paths.DASHBOARD)
     print(f"    dashboard -> {_paths.DASHBOARD.name}  ({payload['meta']['totalLines']:,} lines / "

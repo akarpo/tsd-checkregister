@@ -46,7 +46,8 @@ check(abs(op_total + bond_total - GRAND) < 0.01, "operating + bond = grand total
       f"${op_total:,.2f} + ${bond_total:,.2f}")
 check(abs(sum(fy_amt.values()) - GRAND) < 0.01, "sum of fiscal years = grand total")
 check(sum(fy_cnt.values()) == N, "sum of FY line counts = row count")
-check(FYS == [f"FY{n}" for n in range(11, 27)], "FY range is contiguous FY11-FY26",
+fy_last = int(FYS[-1][2:])   # the upper bound follows the data; a new July opens a new FY
+check(FYS == [f"FY{n}" for n in range(11, fy_last + 1)], f"FY range is contiguous FY11-{FYS[-1]}",
       f"{len(FYS)} buckets")
 
 print("\n2.2  workbook")
@@ -95,6 +96,15 @@ check(p["meta"]["sourceCount"] == len({r["Source Meeting"] for r in combined}),
 # workbook download blurb quoted "All Lines (227,066 rows)" against a 228,640-row
 # dataset and every check above still passed, because they all read the payload
 # and the payload was right. A figure a reader can see is a figure worth testing.
+# The download link names the workbook by its FY span, and the span moved when the
+# July 2026 register opened FY27: the dashboard linked FY11-FY27 while the file on disk
+# was still FY11-FY26, and every figure check passed. A link a reader can click is a
+# figure worth testing.
+links = set(re.findall(r'Troy_SD_Check_Register_FY\d+-FY\d+\.xlsx', html))
+check(links == {_paths.WORKBOOK.name}, "dashboard workbook link = workbook on disk",
+      ", ".join(sorted(links)) or "no link")
+check(_paths.WORKBOOK.name == f"Troy_SD_Check_Register_FY11-{FYS[-1]}.xlsx",
+      "workbook name spans the dataset's fiscal years", _paths.WORKBOOK.name)
 prose_counts = re.findall(r'All Lines \(([\d,]+) rows\)', html)
 check(bool(prose_counts) and all(int(c.replace(",", "")) == N for c in prose_counts),
       "prose row counts = dataset",
